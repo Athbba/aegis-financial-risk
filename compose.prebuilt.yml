@@ -1,0 +1,9 @@
+# Package artifacts already validated with Maven verify and npm run build.
+# Useful when build containers cannot use the host's package proxy/trust configuration.
+services:
+  backend:
+    build:
+      target: prebuilt
+  frontend:
+    build:
+      target: prebuilt
