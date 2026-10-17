@@ -382,7 +382,12 @@ function PortfolioDesk({
 
 function Holdings({ holdings }: { holdings: Holding[] }) {
   return (
-    <div className="table-scroll">
+    <div
+      className="table-scroll"
+      tabIndex={0}
+      role="region"
+      aria-label="Current holdings table"
+    >
       <table>
         <caption className="sr-only">
           Open holdings and FIFO cost basis in USD

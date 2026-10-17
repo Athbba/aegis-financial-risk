@@ -1,0 +1,8 @@
+[Unit]
+Description=Twice-daily AEGIS demo backup (RPO 24 hours)
+[Timer]
+OnCalendar=*-*-* 00,12:00:00 UTC
+Persistent=true
+RandomizedDelaySec=0
+[Install]
+WantedBy=timers.target

@@ -1,6 +1,6 @@
 # AEGIS
 
-**Financial Risk & Trading Analytics Platform — Phase 4**
+**Financial Risk & Trading Analytics Platform — Phase 5 (release preparation)**
 
 AEGIS is an educational investment simulator built with Java 21, Spring Boot 4.0, PostgreSQL and React/TypeScript. The application combines exact decimal settlement and auditable FIFO accounting with dated portfolio valuation, simple performance returns and interactive charts.
 
@@ -15,6 +15,16 @@ Phases 1–3 financial behavior and visual identity are retained. Phase 4 adds:
 - Server-generated request IDs, safe structured logs, health/readiness/liveness and counters that distinguish commits, replays, business rejections and rollbacks.
 - Tab-persistent pending-order recovery across refresh, failed responses and server restart, with owner-scoped key lookup and read-only book reconciliation.
 - A separate migration command, tested optional least-privilege runtime role, safe disposable backup/restore scripts, pinned/hardened runtime containers and measured benchmarks.
+
+
+### Phase 5 deployment and presentation
+
+- Distinct private-network HTTPS deployment, enforced non-owner serving role, separate migrations, explicit closed enrollment and trusted-edge abuse controls.
+- Supported API runtime and enforced non-root PostgreSQL initialization; final-image scan/SBOM/OCI identity gates with a 48-hour DB freshness bound. Medium findings remain visible.
+- Real encrypted fresh-database recovery, immutable-artifact rollback, outage probes and bounded load rehearsals; backup/alert templates and explicit missing target-host/offsite checks.
+- Keyboard-reachable scroll regions, desktop/mobile Axe/contrast checks and masked real-stack synthetic screenshots. Financial math and visual identity are retained.
+
+Start with the [deployment runbook](docs/PHASE5_DEPLOYMENT.md), [release table](docs/PHASE5_RELEASE.md) and [reproducible synthetic demo](docs/PHASE5_DEMO.md). These are local rehearsals, not production-readiness evidence.
 
 Phase 3 provides:
 
@@ -185,4 +195,4 @@ The backend test suite requires Docker and starts an isolated PostgreSQL databas
 | [Phase plan](docs/PLAN.md) | Explicit acceptance criteria for Phases 0–5 |
 | [Mentoring notes](docs/MENTORING.md) | Phase explanations and twenty-five interview questions with sample answers |
 
-The repository stops after Phase 4. Phase 5 has not begun. The two earlier Spring MVC advisories are resolved by the tested Framework 7.0.9 upgrade. Current scan scope, image findings and operational limitations are recorded in [the Phase 4 security review](docs/PHASE4_SECURITY_REVIEW.md) and [TESTING.md](TESTING.md). This is not a production-readiness claim.
+Phase 5 prepares a private, one-instance deployment and a draft release PR; it stops before merge or public launch. The two earlier Spring MVC advisories are resolved by the tested Framework 7.0.9 upgrade. Historical Phase 4 findings are recorded in [its security review](docs/PHASE4_SECURITY_REVIEW.md); current image and deployment evidence is in [Phase 5 security](docs/PHASE5_SECURITY.md) and [TESTING.md](TESTING.md). This is not a production-readiness claim.

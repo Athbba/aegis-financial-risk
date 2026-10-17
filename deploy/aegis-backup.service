@@ -1,0 +1,15 @@
+[Unit]
+Description=AEGIS encrypted backup and authorized off-host transfer
+OnFailure=aegis-alert@%n.service
+[Service]
+Type=oneshot
+User=aegis-backup
+Group=aegis-backup
+EnvironmentFile=/etc/aegis/backup.env
+ExecStart=/opt/aegis/deploy/scheduled-backup.sh
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/aegis-backup
