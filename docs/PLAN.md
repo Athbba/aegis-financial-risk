@@ -14,11 +14,11 @@ Accepted when module boundaries, schema/invariants, financial assumptions, API c
 - Execute domain tests, PostgreSQL integration tests (including concurrency and ownership), frontend build/type checks, and browser journeys against the real stack. Record actual outcomes.
 - Containerized local startup, CI, OpenAPI and truthful project/mentoring documentation.
 
-## Phase 2 — valuation and performance (not started)
-Accept only with reproducible dated valuation, missing-price rules, return methodology, manual numerical test cases, performance/P&L charts, and API/browser tests.
+## Phase 2 — valuation and performance
+Detailed acceptance criteria and the convention chosen before implementation are in [PHASE2_PLAN.md](PHASE2_PLAN.md). Delivery covers immutable historical reconstruction, simple one-deposit returns, honest gaps, marked holdings/allocation, interactive charts, migration preservation and numerical/PostgreSQL/browser validation. Phase 3 remains unstarted.
 
 ## Phase 3 — risk (not started)
-Accept only with documented sample requirements/formulas, deterministic tests for allocation, historical volatility, drawdown, 95/99% historical VaR, stress comparisons, explicit uncertainty and missing-data states.
+Accept only with documented sample requirements/formulas, deterministic tests for risk attribution, historical volatility, drawdown, 95/99% historical VaR, stress comparisons, explicit uncertainty and missing-data states.
 
 ## Phase 4 — reliability/security expansion (not started)
 Accept with threat-model review, authentication abuse controls, expanded failure/concurrency tests, audit retention policy, operational metrics and documented recovery/backup drills.

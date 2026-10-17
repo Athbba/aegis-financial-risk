@@ -1,53 +1,97 @@
-# Financial assumptions — Phase 1
+# Financial assumptions — Phases 1 and 2
 
-AEGIS is educational simulation software, not a brokerage or investment adviser. All default assets and prices are fictional and clearly labeled. No exchange, bank or brokerage integration exists. No results are institution-grade risk forecasts.
+AEGIS is educational simulation software, not a brokerage or investment adviser. Default assets/prices are deterministic fiction. No real exchange execution, bank or brokerage integration exists. These calculations are not institution-grade forecasts.
 
-## Units, precision, rounding
+## Units, settlement and rounding
 
-USD is the only currency. Monetary calculations use Java `BigDecimal` constructed from decimal values, never binary floating-point balances. API amounts/quantities are decimal strings. Browser number conversion is used only for formatted display, never for accounting decisions.
+USD only; no implicit USD/SAR conversion. Monetary/quantity arithmetic uses Java BigDecimal and PostgreSQL numeric. JSON decimals are strings. Browser Number conversion is only for formatting, chart coordinates and presentation, never financial calculations.
 
-| Value | Precision / policy |
+| Value | Policy |
 | --- | --- |
-| Cash, funding, settled gross, cost basis, realized P/L | USD cents, HALF_EVEN when rounding is necessary |
-| Historical closing price | 4 decimal places |
-| Quantity | Up to 6 decimal places; `(0, 1,000,000]` per order |
-| Initial funding | `[0.01, 1,000,000,000.00]` USD; excess precision rejected |
-| Cash storage | PostgreSQL `numeric(19,2)`; service rejects overflow |
+| Cash, funding, trade gross, cost basis, marked position value, P/L | USD cents; HALF_EVEN |
+| Synthetic close | 4 decimals |
+| Quantity | At most 6 decimals; `(0, 1000000]` per order |
+| Initial deposit | `[0.01, 1000000000.00]`; one per portfolio |
+| Return/allocation percentages | Percentage points with 4 decimals, HALF_EVEN; UI displays 2 |
 
-An order's settled gross is `round_half_even(quantity × exact_close, 2)`. A zero rounded gross is rejected. Price and quantity inputs with excess precision are rejected rather than silently truncated. Fees are zero. BUY deducts gross; SELL adds gross.
+Trade gross = round(quantity × exact close, 2). Reject a rounded zero gross and excess input precision. BUY deducts gross; SELL adds gross. Fees are zero. Each **aggregate position's** marked value is rounded to cents before summing positions. This can differ by a cent from summing hypothetical individually rounded lot marks; aggregate position rounding is the documented convention. Cash and sell P/L use actual settled records, not recomputed unrounded price products.
 
-## Historical simulation and missing prices
+## The simulation clock and capital baseline
 
-The client explicitly selects an execution date. The exact stored closing price for that asset/date is required. Unknown/missing prices are `null` in quote responses and a `PRICE_UNAVAILABLE` rejection on execution, never zero or an automatic forward-fill. Default data spans 2022-01-03 to 2025-12-31 on weekdays. Exchange holidays are not modeled.
+**All existing and new portfolios begin at the opening of 2022-01-03**, the synthetic dataset's first date. The one initial funding amount is available then, even if the real account was created in 2026. This is a chosen historical-simulation baseline, not a claim that the account existed in the real past. V2 adds persisted `simulation_start_date`; it does not rewrite `created_at`, funding `recorded_at`, cash, orders, lots or audit history. Before the first trade, capital sits in cash.
 
-The synthetic reference close timestamp is **21:00 UTC** on that date. This is an educational convention, not a real exchange session, timezone/DST model, order arrival time or execution guarantee. `executedAt` is this modeled historical timestamp; `recordedAt` is the actual server receipt-processing timestamp. No claim of real historical exchange execution is made.
+Dates before that start fail with BEFORE_SIMULATION_START; there is no invented zero balance before inception. The supported horizon ends on 2025-12-31. An omitted valuation date means this latest **dataset** date, not today's wall-clock date or the last nonmissing quote for an asset. No deposit is counted as profit.
 
-Orders for a portfolio must progress in nondecreasing historical date order. Same-date orders execute sequentially under the portfolio lock. Retrying a stored idempotency key can replay an earlier order without re-execution. Initial funding is treated as available before the first simulated order; its real recording date is not a historical cash-flow observation. Phase 2 must define dated funding/return conventions before using these records in a time series. Knowing future synthetic prices is permitted: this is accounting education, not a predictive backtest or investment strategy evaluation.
+Snapshots are end-of-day after all executions with `price_date <= date`. A synthetic reference close is 21:00 UTC; it is not a real exchange session/DST model. `executedAt` is modeled time; `recordedAt` is actual processing time. Trades must progress in nondecreasing historical dates. Knowing later synthetic prices is allowed: this is accounting education, not a predictive strategy evaluation.
 
-## FIFO cost basis and realized profit/loss
+Valuations reconstruct the portfolio **as known from the stored records now**, at the requested historical date. They are not bitemporal “what the system knew at an earlier real recording timestamp” reports. Appending a permitted historical execution can change subsequent historical snapshots. Same-day executions all belong to that day's closing snapshot; no intraday valuation API exists.
 
-A buy opens a lot with original quantity and cost equal to settled gross. A sell consumes oldest remaining lots first.
+## Historical accounting and valuation
 
-For a partial consumption of `q` from a lot with remaining quantity `Q` and cost `C`:
+For historical date d, using the immutable execution records and FIFO sell allocations through d:
 
-`allocated_cost = round_half_even(C × q / Q, 2)`
+- cash(d) = initial deposit − sum(BUY gross) + sum(SELL gross)
+- quantity(asset,d) = sum(BUY quantity) − sum(SELL quantity)
+- remaining cost(asset,d) = sum(BUY settled gross) − sum(allocated sell cost)
+- realized P/L(asset,d) = sum(stored sell realized P/L)
+- market value(asset,d) = round(quantity(asset,d) × exact dated close, 2)
+- total value(d) = cash(d) + sum(position market values)
+- unrealized P/L(asset,d) = market value(asset,d) − remaining cost(asset,d)
+- total P/L(d) = realized P/L(d) + unrealized P/L(d) = total value(d) − initial deposit
 
-A full consumption takes **all** remaining cost, preserving rounding remainders. The lot retains `Q − q` units and `C − allocated_cost` USD. Then:
+Present-day `position_lot.remaining_quantity` and `remaining_cost` are **never** used to reconstruct old positions. Buy gross and immutable sell allocations preserve historical cost even after later partial/full sales. End-of-day sums are independent of arbitrary UUID ordering when recording timestamps tie. Execution-time FIFO was already fixed by acquisition time and generated lot sequence in Phase 1.
 
-`realized_P/L = settled_sell_gross − sum(allocated_cost)`
+Closed positions have zero quantity, cost and market value, retain realized P/L, and need no close. The marked-positions API includes closed positions to preserve individual asset performance. A zero remaining cost makes the unrealized return percentage undefined, not infinite or zero. Missing funding or inconsistent accounting fails explicitly rather than silently repairing financial state.
 
-Example used in tests: buy 10 units at USD 10 and 5 at USD 20; sell 12 at USD 30. Proceeds = USD 360; FIFO cost = 100 + 40 = USD 140; realized P/L = USD 220; remaining = 3 units with USD 60 cost. Cash starting at USD 1,000 becomes USD 1,160. This example is a manually chosen test fixture, not a market observation.
+### FIFO policy retained from Phase 1
 
-A three-unit USD 1.00 cost lot sold one unit at a time allocates USD 0.33, 0.34, 0.33 under the remaining-lot policy. Total allocated cost remains USD 1.00. Sell records store realized P/L; remaining holdings show cost basis, not market value. Unrealized P/L and portfolio performance are not implemented in Phase 1.
+A buy opens a lot at settled gross cost. Partial consumption q from remaining quantity Q and cost C allocates `round(C × q / Q, 2)`. Final consumption takes all remaining cost. Remaining quantity/cost are reduced by the actual allocation. Realized sale P/L = settled proceeds − allocated costs. A 3-unit USD 1.00 lot consumed one unit at a time allocates 0.33, 0.34, 0.33, preserving the full dollar. The engine checks that P/L reconciles to equity minus capital.
 
-## Synthetic data generation
+## Simple performance conventions
 
-`SyntheticPrices` uses per-asset fixed seeds 73129, 73130, 73131 for ALTA, BRIM, COVE. Dataset version: `synthetic-v1-seed-73129`. There are 1,043 weekday observations per asset, 3,129 total. Prices follow a simple multiplicative lognormal-style path with asset-specific volatility, a negative 2023 regime and positive 2022/2024/2025 drift; 2023 volatility is amplified. Prices have a positive floor. Variation is plausible for demonstration, not calibrated to real securities. Floating-point math in this generator describes fictional paths only; resulting closes are immediately rounded to four-decimal `BigDecimal` and persisted. Tests check deterministic output, range, positivity and count. Seed insertion is transactional, serialized by an advisory lock and idempotent. Existing rows are not overwritten on startup.
+With one initial deposit and **no subsequent deposits/withdrawals**, since-start return is:
 
-## Deliberate omissions
+`return_percent(d) = 100 × (total_value(d) − initial_capital) / initial_capital`
 
-Dividends, splits, corporate actions, interest, taxes, fees, bid/ask spreads, slippage, liquidity, exchange calendars, settlement delays, leverage, shorts, order books, open/limit orders, FX, real-time updates and real market providers are absent. All accepted simulated orders fill immediately at the documented synthetic close. There are no pending order states.
+For user-selected inclusive endpoints a and b:
 
-Valuation time series, returns, volatility, drawdown, VaR, stress testing, allocation charts and correlation belong to later phases. Their mathematical conventions, sample requirements, missing-data treatment and numerical tests must be documented before implementation. Phase 1 exposes no placeholder risk figures.
+`period_change = total_value(b) − total_value(a)`
 
-`HistoricalPriceProvider` is the seam for later price sourcing. An external provider must first define licensing/redistribution rights, provenance, dataset/version timestamps, a persisted cache, missing/stale rules and failure behavior. Execution should use persisted verified observations, not depend on a live network call within a financial transaction. No paid key is required now.
+`period_return_percent = 100 × period_change / total_value(a)`
+
+Both endpoints are end-of-day. The range return excludes changes before/within the first day's closing baseline; since-start return always compares against opening initial capital. A single-date complete range has zero endpoint change but insufficient observations for a trend chart. A zero starting value makes range percentage null with ZERO_START_VALUE; absolute change remains available. No annualization, benchmark, time weighting or money weighting is implemented or claimed. If cash flows are added later, this return convention must be revisited before use.
+
+Individual positions expose realized, unrealized and total P/L. `unrealizedReturnPercent` divides unrealized P/L by the **remaining** cost basis, not cumulative portfolio funding. It is not a lifecycle/annualized asset return.
+
+## Exact-date prices, weekends and gaps
+
+Only the exact stored close for that symbol/date is used. No automatic carry-forward or interpolation, including weekends and weekday holes. Unknown is not zero. Cash-only dates are fully valued without price observations. On a date with any unpriced open asset:
+
+- status = MISSING_PRICES, with the missing symbols;
+- cash, initial capital, realized P/L, quantities and cost remain known;
+- aggregate market value, total equity, unrealized/total P/L and return are null;
+- individual priced positions may retain their known values, but no partial aggregate is presented as the portfolio total;
+- allocation weights are unavailable, and a period with a missing endpoint has no change/return estimate.
+
+The calendar-day series retains those dates as explicit null points. The chart breaks its line at gaps. The deposited-capital baseline is always identifiable as capital, never a return. Two complete observations are the minimum for the trend chart; even two are merely a comparison, not statistical inference. Intermediate gaps are disclosed even when both endpoints suffice for a simple period return.
+
+Allocation includes cash and open assets: weight = 100 × component market value / total value. Zero total value produces ZERO_TOTAL_VALUE and undefined weights. Individually rounded weights need not sum to exactly 100%. This is composition, not a Phase 3 risk score.
+
+## Required numerical example (test fixtures only)
+
+| Date/event | Cash | Quantity | Cost | Marked value | Equity |
+| --- | --- | --- | --- | --- | --- |
+| Initial capital | 1000.00 | 0 | 0.00 | 0.00 | 1000.00 |
+| 2024-01-02: buy 10 at 10.0000 | 900.00 | 10 | 100.00 | 100.00 | 1000.00 |
+| 2024-01-03: sell 4 at 15.0000 | 960.00 | 6 | 60.00 | 90.00 | 1050.00 |
+| 2024-01-04: close 12.0000 | 960.00 | 6 | 60.00 | 72.00 | 1032.00 |
+
+Realized P/L = 60 − 40 = 20; unrealized P/L = 72 − 60 = 12; total P/L = 32; since-start return = 3.2000%. Jan 3–4 endpoint change = −18, return = −1.7143%. Both pure unit tests and PostgreSQL service tests execute this scenario. These hand-selected fictional fixture prices are not injected into the application's demo market.
+
+## Dataset, computation limits and omissions
+
+Default ALTA/BRIM/COVE data: version `synthetic-v1-seed-73129`, seeds 73129–73131, 1,043 weekday observations each (3,129 total), 2022-01-03 through 2025-12-31. A simple lognormal-style generator models asset-specific volatility, a negative/high-variance 2023 regime and positive drift in other years, with a positive floor. Floating-point is used only to generate fictional paths; stored closes are immediately rounded to four-decimal BigDecimal. Prices are not fitted to real assets and exchange holidays are not modeled. Startup insertion is transactional, advisory-lock serialized, repeatable and does not overwrite existing observations.
+
+Analytics is bounded to 1,461 inclusive calendar days, 10,000 executions through the end date, and 100 distinct traded assets. Limits are rejected, not silently truncated. Bulk queries plus one chronological accounting pass avoid a database query per chart point. No valuation cache or precomputed snapshots are used, avoiding stale results after trades.
+
+Dividends, splits, corporate actions, interest, taxes, fees, spreads, slippage, liquidity, settlement delays, leverage, shorts, limit/open orders, FX and external market providers remain absent. All accepted simulated orders fill immediately at the documented close. Phase 3 volatility, drawdown, VaR, correlation and stress tests are not implemented. No institution-grade risk forecasts are claimed. The existing HistoricalPriceProvider remains the seam for later licensed data with documented provenance/caching/failure rules; no paid API is required now.

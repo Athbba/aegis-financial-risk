@@ -69,7 +69,7 @@ export function Auth({ signedIn }: { signedIn: (u: User) => void }) {
       </section>
       <main id="main" className="auth-form">
         <div className="form-wrap">
-          <span className="badge">PHASE 1 · SIMULATION WORKSPACE</span>
+          <span className="badge">PHASE 2 · SIMULATION WORKSPACE</span>
           <h2>{register ? "Create your workspace" : "Welcome back"}</h2>
           <p className="muted">
             {register

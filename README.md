@@ -1,12 +1,22 @@
 # AEGIS
 
-**Financial Risk & Trading Analytics Platform — Phase 1**
+**Financial Risk & Trading Analytics Platform — Phase 2**
 
-AEGIS is an educational investment simulator built with Java 21, Spring Boot 3.5, PostgreSQL and React/TypeScript. Its first release focuses on the accounting behind a portfolio: exact decimal settlement, transaction safety, FIFO cost basis and explainable records.
+AEGIS is an educational investment simulator built with Java 21, Spring Boot 3.5, PostgreSQL and React/TypeScript. The application combines exact decimal settlement and auditable FIFO accounting with dated portfolio valuation, simple performance returns and interactive charts.
 
 **Simulation only.** All default assets and prices are deterministic synthetic data. No brokerage integration, real trades or investment advice. The project is not an institution-grade financial risk system.
 
 ## Implemented
+
+Phase 1 trading/accounting behavior is retained. Phase 2 adds:
+
+- Historical cash, quantities and FIFO cost reconstructed from immutable executions and sell allocations; future trades never leak into earlier snapshots.
+- Exact-date market value, total equity, realized/unrealized/total P/L, simple return on initial capital and endpoint range performance.
+- Interactive equity chart with deposited-capital baseline, mouse/keyboard tooltips, date presets/custom ranges and an accessible dated-data table.
+- Cash/asset market-value allocation and marked position performance, including closed positions' realized P/L.
+- Explicit missing-price/weekend gaps, no-trade and insufficient-observation states, bounded owner-scoped APIs and additive migration preserving existing portfolios.
+
+The foundation includes:
 
 - Registration/login with BCrypt, HttpOnly session cookies, CSRF protection and portfolio ownership checks.
 - Named USD portfolios, one initial simulated cash deposit and immutable funding records.
@@ -16,7 +26,7 @@ AEGIS is an educational investment simulator built with Java 21, Spring Boot 3.5
 - Responsive dark dashboard, record filtering/pagination, explicit loading/empty/error states and simulation labels.
 - Flyway migrations, authenticated OpenAPI JSON, health checks, JSON logs, PostgreSQL integration tests and desktop/mobile browser journeys.
 
-**Not implemented:** valuation time series, unrealized P/L, returns, charts, volatility, drawdown, VaR, stress testing, external market data, FX or production deployment. Those begin in later phases; there are no placeholder risk metrics. See [PROGRESS.md](PROGRESS.md).
+**Not implemented:** volatility, drawdown, VaR, correlation, stress testing, benchmarks, annualized/TWR/MWR returns, external market data, FX or public production deployment. Phase 3 risk analysis has not begun. See [PROGRESS.md](PROGRESS.md).
 
 ## Run locally
 
@@ -57,15 +67,18 @@ npm --prefix frontend run dev
 
 In the prepared cloud workspace, use `./scripts/cloud-maven.sh -B -ntp verify` in place of `mvn`. It activates the verified full JDK/Maven, a writable cache and the existing egress proxy/system trust store without disabling TLS checks. This helper is optional and not required by standard local development or CI.
 
-### First simulated journey
+### Working performance journey
 
-1. Register with your own email and a 12–72 character password (at most 72 UTF-8 bytes).
-2. Create “Core conviction” with USD 10,000 of simulated cash.
-3. Choose ALTA, quantity 10 and historical execution date 2024-01-02; inspect the exact synthetic close, then buy.
-4. Sell 4 units on the same date. Review the remaining 6 units and FIFO cost basis, executed records, ledger and audit trail.
-5. Try overselling or choosing a Saturday. The application rejects the order or shows the missing quote explicitly.
+1. Register an account and create “Historical lens” with USD 1,000 of simulated capital.
+2. Buy 10 ALTA at the synthetic close on 2024-01-02; sell 4 on 2024-01-03.
+3. Set performance start to 2024-01-01 and valuation/end to 2024-01-08, then apply dates.
+4. Inspect cash, marked holdings, realized/unrealized P/L, equity, allocation and the chart. Hover or focus the chart and use arrow keys. Expand “View dated values and price gaps” to inspect exact backend results.
+5. For dataset synthetic-v1-seed-73129, this executed browser journey shows cash **$732.84**, market value **$264.68**, equity **$997.52**, realized P/L **$0.49**, unrealized P/L **−$2.97**, total P/L **−$2.48** (simple return **−0.25%** displayed). These are observed synthetic calculations, not real market results.
+6. Select 2024-01-01 alone: capital is still cash and future trades are excluded. Select 2024-01-06: exact closes are missing, so total value/returns are unavailable, not zero. Return to a multi-day range for the chart.
 
-Funding is available before the first simulated order. Trade dates can stay the same or move forward; they cannot move backwards. Synthetic 21:00 UTC close timestamps do not represent real exchange executions. See [FINANCIAL_ASSUMPTIONS.md](FINANCIAL_ASSUMPTIONS.md) for all conventions and omissions.
+Simulation starts at the **opening of 2022-01-03**, with the one initial deposit available then. Actual account/funding timestamps are preserved. The latest dataset date is **2025-12-31**, not wall-clock today. Period return compares two end-of-day values; since-start return compares with initial funding. Neither is TWR/MWR. Missing prices are never carried forward. The lower execution desk always shows the latest executed cash/holdings; the upper dashboard uses the selected historical date.
+
+The separate hand-verifiable **$1,032 / 3.20%** scenario is implemented in unit/PostgreSQL tests using explicitly isolated fixture prices; it does not replace the application's synthetic market data. All formulas and limitations are in [FINANCIAL_ASSUMPTIONS.md](FINANCIAL_ASSUMPTIONS.md).
 
 ### Packaging in a restricted cloud network
 
@@ -84,9 +97,11 @@ Stop local Java/Vite processes first if they occupy ports 8080/5173. This path p
 
 Captured from the running application using only the fixed-seed synthetic dataset and automated browser-created simulated trades:
 
-![Phase 1 desktop portfolio desk](docs/images/phase1-desktop.png)
+![Phase 2 portfolio valuation and performance](docs/images/phase2-desktop.png)
 
-[Mobile screenshot](docs/images/phase1-mobile.png)
+[Phase 2 mobile screenshot](docs/images/phase2-mobile.png)
+
+[Earlier Phase 1 screenshot](docs/images/phase1-desktop.png)
 
 ## Verify
 
@@ -116,6 +131,6 @@ The backend test suite requires Docker and starts an isolated PostgreSQL databas
 | [Progress](PROGRESS.md) | Delivered and unfinished functionality |
 | [Cloud environment rebuild](docs/CLOUD_ENVIRONMENT.md) | Saved Codex installation/startup instructions and state boundaries |
 | [Phase plan](docs/PLAN.md) | Explicit acceptance criteria for Phases 0–5 |
-| [Mentoring notes](docs/MENTORING.md) | Phase explanations and ten interview questions with sample answers |
+| [Mentoring notes](docs/MENTORING.md) | Phase explanations and fifteen interview questions with sample answers |
 
-The repository deliberately stops at Phase 1. Performance and risk analytics require their own mathematical specifications and deterministic test fixtures before implementation.
+The repository stops at Phase 2. Phase 3 risk analytics require separate mathematical specifications and numerical tests and have not begun.

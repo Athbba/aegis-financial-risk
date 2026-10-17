@@ -7,8 +7,8 @@ import java.util.*;
 /** Reproducible educational data only. Never represents exchange observations. */
 public final class SyntheticPrices {
   public static final String VERSION = "synthetic-v1-seed-73129";
-  public static final LocalDate START = LocalDate.of(2022, 1, 3);
-  public static final LocalDate END = LocalDate.of(2025, 12, 31);
+  public static final LocalDate START = com.aegis.shared.SimulationCalendar.START;
+  public static final LocalDate END = com.aegis.shared.SimulationCalendar.END;
 
   public record Asset(
       String symbol, String name, String sector, long seed, double initial, double volatility) {}

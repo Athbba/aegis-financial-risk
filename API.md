@@ -1,4 +1,4 @@
-# Phase 1 API
+# AEGIS API — Phases 1 and 2
 
 Base path `/api`, JSON requests. Exact decimal fields are **strings** in responses; use strings in requests to avoid binary conversion in clients. OpenAPI JSON is generated at `/v3/api-docs` on backend port 8080 and requires a signed-in session. It documents schemas/paths; these notes define the accounting and retry semantics. There is no trading-provider connectivity.
 
@@ -68,3 +68,37 @@ Failures use `application/problem+json` with `type`, `title`, `status`, `detail`
 | 500 | `INTERNAL_ERROR`: unexpected failure, safe detail; inspect server logs |
 
 A health request at `/actuator/health` is public and returns UP when the server/database health check succeeds. This is an operational check, not proof a financial transaction works; integration/browser tests provide that evidence.
+
+## Phase 2 — valuation and performance
+
+All endpoints below require the current session and the same owner-scoped portfolio authorization. Foreign/nonexistent portfolios return 404; anonymous requests return 401. They are read-only GETs; the Phase 1 session/CSRF and decimal-string conventions are unchanged. The portfolio DTO additionally exposes `simulationStartDate` (2022-01-03 for migrated and new portfolios).
+
+| Path under `/api/portfolios/{id}` | Parameters | Response |
+| --- | --- | --- |
+| `/valuation` | optional `date` (default 2025-12-31) | Dated `Snapshot` |
+| `/value-series` | required inclusive `from`, `to` | Daily calendar series with funding baseline, complete/missing day counts |
+| `/performance` | required inclusive `from`, `to` | One consistent response containing ending snapshot, endpoint-period comparison, daily series and allocation |
+| `/holdings` | optional `date` | Dated marked positions, including closed positions' realized P/L |
+| `/allocation` | optional `date` | Cash/open-asset market values and percentage weights |
+
+`Snapshot`: `date`, `status`, `initialCapital`, `cash`, `marketValue`, `totalValue`, `realizedPnl`, `unrealizedPnl`, `totalPnl`, `returnPercent`, `missingSymbols`, `positions`.
+
+Each position: `symbol`, `quantity`, `costBasis`, `valuationPrice`, `marketValue`, `realizedPnl`, `unrealizedPnl`, `totalPnl`, `unrealizedReturnPercent`. Cost is historical FIFO remaining settled cost. `valuationPrice` is the exact requested close, never an implied real-time/latest-before price. It is null for a closed position because no mark is required.
+
+`Series`: `from`, `to`, `simulationStartDate`, `currency`, `initialCapital`, `completeDays`, `missingDays`, `points`. Each point contains date/status, cash, market/equity, P/L/return and missing symbols. No price-gap dates are dropped. The current simulation horizon is fixed and documented; optional dates do not silently use wall-clock today.
+
+`Performance`: `simulationStartDate`, `currency`, `summary`, `period`, `series`, `allocation`. `period` contains `startingValue`, `endingValue`, `change`, `returnPercent`, `status`. Since-start percentage in summary uses opening initial capital; period percentage uses starting end-of-day value. These are simple returns, not TWR/MWR. The combined endpoint supplies all dashboard figures from one REPEATABLE READ transaction.
+
+`Allocation`: `date`, `status`, `missingSymbols`, `items` containing symbol (`CASH` for available money), market value and weight percentage. Cash is included in the denominator. Closed positions are omitted from allocation, not from performance history.
+
+### Missing and insufficient data contracts
+
+A valid date with any unpriced open position returns **200** with `status: MISSING_PRICES`. Known cash, realized P/L, quantity and cost are retained; aggregate market value/equity/unrealized P/L/total P/L/return are **null**, not zero. Allocation weights are null and its chart must be withheld. A cash-only date needs no asset prices. Weekends are ordinary calendar dates with missing closes for held assets.
+
+A period with a missing endpoint has `status: MISSING_ENDPOINT_PRICE` and null change/return. A zero starting value has `status: ZERO_START_VALUE`, known change and null percentage. Allocation with zero total value has `status: ZERO_TOTAL_VALUE` and null weights. Two complete observations are required to draw the UI trend chart; a single day is still a valid API snapshot/series.
+
+### Bounds and errors
+
+Malformed/missing dates: 400 INVALID_INPUT. Reversed ranges, dates after 2025-12-31, or ranges over 1,461 inclusive calendar days: 422 INVALID_DATE_RANGE. A start before portfolio simulation start: 422 BEFORE_SIMULATION_START. More than 10,000 executions through the end date or 100 distinct traded assets: 422 ANALYTICS_LIMIT. No silent truncation/sampling. Missing funding: FUNDING_UNAVAILABLE; inconsistent execution/allocation/accounting records: ACCOUNTING_DATA_INCONSISTENT (422). Those integrity failures are explicit, not replaced with estimated values.
+
+Historical quantities, cost and cash are reconstructed from immutable executions/funding/allocations, never current mutable lot remainders. Details/formulas and the manually verifiable 3.20% fixture are in FINANCIAL_ASSUMPTIONS.md. OpenAPI JSON includes the new DTOs and exact-decimal string schema.
