@@ -1,5 +1,5 @@
 {
-  "sourceCommit": "3d053253c6f5b0eebe5ae27b1196af147353cf6e",
+  "sourceCommit": "3694b2ec367b3ae6b1642124a12a2510f5ab8371",
   "scanner": "Trivy",
   "scannerVersion": "0.76.0",
   "database": {
@@ -31,14 +31,14 @@
   "scope": "Final locally built images; no registry publication",
   "images": {
     "api": {
-      "imageId": "sha256:a7ed91780c6aaa76b618c2a41564c4f81de58500f1df8f85efdb8c82b9e9d317",
+      "imageId": "sha256:9c6b6de54294c2d88756c557744cc044486de6e4d2bac0d2798553dfa54f9781",
       "platform": "linux/amd64",
       "publisherDigests": [],
-      "sourceCommit": "3d053253c6f5b0eebe5ae27b1196af147353cf6e",
+      "sourceCommit": "3694b2ec367b3ae6b1642124a12a2510f5ab8371",
       "sha256": {
-        "scan.json": "70e07c70ad89dab19fd55b7e67f557c48b64a3bd0f389c4e56c9bb70f329c039",
-        "sbom.json": "a4592902f7c38bd736b8e091302fb070a0d2c31b94ffaeb2d7f7fc3cdc90007e",
-        "oci.tar": "4ab0ab62164034d70085f4417e1da060dc10c751d0ed3259fc8f75fa63fe1f66"
+        "scan.json": "03f0d2ca178896fea897e9bfbd00595bac444c96fda3c0b125ab4dc5ced773e2",
+        "sbom.json": "a04ddde392a97f3415a1f43f19a852541a1951b527f4b2992b3d24ec0f55d0ed",
+        "oci.tar": "91bc1375f616c84ffa9d05b3807d2c3a1824b9527c9e8cc4a8b45a594c7314ce"
       },
       "counts": {
         "MEDIUM": 1
@@ -55,14 +55,14 @@
       ]
     },
     "ui": {
-      "imageId": "sha256:30803625c2644b85b2063accf4739058f916b70be030ce35d04a5aeb6d033270",
+      "imageId": "sha256:8b89ac356131e4ea371960cf88e79e1dae25e0a89def9b01ffb2726dae7cb0ba",
       "platform": "linux/amd64",
       "publisherDigests": [],
-      "sourceCommit": "3d053253c6f5b0eebe5ae27b1196af147353cf6e",
+      "sourceCommit": "3694b2ec367b3ae6b1642124a12a2510f5ab8371",
       "sha256": {
-        "scan.json": "5c30600e990ea3251b50658506175233c2e420780f42d90ec4b7de0a16c8b869",
-        "sbom.json": "ad02b0c4b99378c7c545311edc71d5241764f32763d35f811a98919bfe384f9b",
-        "oci.tar": "84bd7535464ef213a95c27a399225e693d2d81a66e2d5b5253fa24ad328f1e09"
+        "scan.json": "51423ed47f1942ac47593a41e6c21d615aaba08c3a22755f6094f4a6091ef18c",
+        "sbom.json": "9808d880a531ab701f7252cd2f20a68fc14562e53307319d0ef7f45fa6bf0263",
+        "oci.tar": "8bbd9b00252a7cd15fc361357abaefde8896d18ec844a49584cd45a885013266"
       },
       "counts": {
         "MEDIUM": 1
@@ -79,14 +79,14 @@
       ]
     },
     "database": {
-      "imageId": "sha256:915c1c7012b413527f91adefc88c725218706f38bd8e38591e03a86219b7a8da",
+      "imageId": "sha256:45a0704eaea99b1120e0585a235f9c68dc3d3c4bb3f51fe945a4802a03ab71c2",
       "platform": "linux/amd64",
       "publisherDigests": [],
-      "sourceCommit": "3d053253c6f5b0eebe5ae27b1196af147353cf6e",
+      "sourceCommit": "3694b2ec367b3ae6b1642124a12a2510f5ab8371",
       "sha256": {
-        "scan.json": "a2393c0966873b5f11bb99fee896e58ce9110ba6b5f474a32af06f84c2cf0d51",
-        "sbom.json": "a4e481eca07aa7f4c7f535d68aea09aa0e2621672fa0822c876fdd0aad76ce4f",
-        "oci.tar": "c1fae65624de240ebf88a58f28806c5bd07760d08c2ed8d51ac466182a4592c6"
+        "scan.json": "5d814579090322c06347fb419bdf7e2fe5dde81e4cda6f342abdbcb95f3c19ee",
+        "sbom.json": "ad9c6fa8d22cf53ef62c52800696f07110dcb3fc3d33e80d3eef2222f72ad2c9",
+        "oci.tar": "db3ed8ef3539a1d7662db4f07991eb0b98b1bf1b41cf47bf3d2bdd311d8e095b"
       },
       "counts": {
         "MEDIUM": 1

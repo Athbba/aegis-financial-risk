@@ -7,7 +7,7 @@ Baseline: `b3151f55bf63709808b6279eb3970972db3162aa`, no later main changes at v
 | Blocker/control | Status | Evidence | Remaining action |
 | --- | --- | --- | --- |
 | Verified merged Phase 4 baseline | PASS | Main CI above; [plan](PHASE5_PLAN.md) | Recheck main before merge |
-| Final immutable image evidence, zero Critical/High, DB ≤48h | PASS | Local source-3d05325 gate; [identity/finding summary](phase5-image-summary.json) | Refresh before release; CI artifact evidence follows |
+| Final immutable image evidence, zero Critical/High, DB ≤48h | PASS | Local source-3694b2e gate; [identity/finding summary](phase5-image-summary.json) | Refresh before release; CI artifact evidence follows |
 | Runtime role, membership/effective privilege rejection | PASS | `DatabaseSafetyTest`, `DeploymentGuard`, [runbook](PHASE5_DEPLOYMENT.md) | Verify selected host/role configuration |
 | Private API/DB, non-root initialization and container limits | PASS | `rehearse-deployment-controls.py` effective inspections | Validate target filesystem/volume ownership and firewall |
 | Trusted HTTPS, secure cookies, proxy client isolation | PASS | Real trusted-CA stack/browser; separate client spoof/throttle/restart rehearsal | Domain/public certificate, canonical redirect, external proxy/firewall review |
@@ -25,7 +25,7 @@ Measured reports and immutable identities are below; exact delivered-commit GitH
 
 ## Final local image gate
 
-Source commit **`3d053253c6f5b0eebe5ae27b1196af147353cf6e`**. [Compact immutable image/platform/OCI/report/SBOM summary](phase5-image-summary.json). Trivy **0.76.0**; vulnerability DB updated **2026-10-17 18:34:28 UTC**, Java DB updated **2026-10-17 01:07:50 UTC**. The actual gate passed with both ages ≤48 hours. Each final API/UI/database image has **zero Critical/High, one Medium** (zlib CVE-2026-85091); no Low/Unknown findings. Full sanitized JSON, CycloneDX SBOMs and checksum-bound OCI archives are local ignored artifacts and are also generated/uploaded by CI. They are not external registry publications.
+Source commit **`3694b2ec367b3ae6b1642124a12a2510f5ab8371`**. [Compact immutable image/platform/OCI/report/SBOM summary](phase5-image-summary.json). Trivy **0.76.0**; vulnerability DB updated **2026-10-17 18:34:28 UTC**, Java DB updated **2026-10-17 01:07:50 UTC**. The actual gate passed with both ages ≤48 hours. Each final API/UI/database image has **zero Critical/High, one Medium** (zlib CVE-2026-85091); no Low/Unknown findings. Full sanitized JSON, CycloneDX SBOMs and checksum-bound OCI archives are local ignored artifacts and are also generated/uploaded by CI. They are not external registry publications.
 
 The earlier source-9077736 scan correctly failed on new High libexpat CVE-2026-77214 in API/UI. Publisher refresh retained the same digests and the official package repository remained proxy-403-blocked. Source inspection plus supported APK removal of unused server font/image-filter packages removes their libexpat/libpng dependency chain; certificate/JRE/startup and financial/HTTPS/browser checks remain required. That failed scan was not suppressed. See [security rationale](PHASE5_SECURITY.md). Medium zlib is unresolved and must be followed up; a gate pass is not public-release approval. Refresh evidence before release, because these timestamps naturally expire.
 
