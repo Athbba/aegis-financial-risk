@@ -42,7 +42,7 @@ The new test registers and creates a USD 1,000 portfolio, verifies flat initial 
 
 It then inspects dated records and weekend gaps, selects a date before the trades to prove future exclusion, selects a missing-price weekend to check unknown totals/allocation, rejects reversed ranges, exercises chart mouse/keyboard tooltips, injects an explicit HTTP outage to test retry, and captures the real restored dashboard. Error injection supplies no fabricated financial numbers. Tests also check JavaScript/CSP errors and page-level horizontal overflow. Original journeys check HttpOnly/SameSite cookies, no localStorage credentials, oversell rejection, ledger/audit records and re-login persistence.
 
-The chart's readable dated-value table and allocation list support nonvisual use; this is not a full external accessibility or penetration audit. Mobile is emulation, not physical device validation; Firefox/WebKit and managed-browser CI execution are separate checks.
+The chart's readable dated-value table and allocation list support nonvisual use; this is not a full external accessibility or penetration audit. Mobile is emulation, not physical device validation; Firefox/WebKit remain unverified. GitHub CI additionally ran the workflow using its managed Chromium.
 
 ## Executed locally — 17 October 2026
 
@@ -55,7 +55,7 @@ The chart's readable dated-value table and allocation list support nonvisual use
 - **Existing local data: preserved.** A pre-upgrade custom PostgreSQL backup was restored into a separate temporary database, all original row hashes were compared against the upgraded app (except the added portfolio baseline column), and the temporary copy was removed. The original 16 accounts, 3 assets, 3,129 prices, 16 portfolios, 16 executions, 8 lots, 8 allocations, 32 ledger entries and 32 audit events matched. No original database volume was removed.
 - **Container packaging/startup passed.** The tested prebuilt-artifact Compose path applies V2 and retains existing data. Health UP and expected frontend HTML were verified; browser tests provide functional evidence beyond health.
 
-The Phase 2 container/browser suite is the current end-to-end evidence. Phase 1 was also tested on the native Vite stack earlier; Phase 2 native browser testing is not claimed. Remote CI results are reported separately with the delivery PR; workflow presence alone is not a passing CI claim. No public deployment or new-cloud-task restoration is claimed.
+The Phase 2 container/browser suite is the current end-to-end evidence. Phase 1 was also tested on the native Vite stack earlier; Phase 2 native browser testing is not claimed. GitHub Actions push and pull-request runs passed for implementation commit `3c810e873eb044edc6c80a874fe6542358b2d353`: [push verification](https://github.com/Athbba/aegis-financial-risk/actions/runs/38989766913) and [PR verification](https://github.com/Athbba/aegis-financial-risk/actions/runs/38989784943). Both completed the backend, frontend build/formatting, managed-browser install, container startup and desktop/mobile browser stages. Current checks are available on [PR #2](https://github.com/Athbba/aegis-financial-risk/pull/2); workflow presence alone is not a passing CI claim. No public deployment or new-cloud-task restoration is claimed.
 
 ## Environment constraints and results
 
