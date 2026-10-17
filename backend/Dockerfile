@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jre AS runtime-base
+FROM eclipse-temurin:21-jre@sha256:227118764cccd3c3294617061aaa93a08309c63a395eefa83e6b35032992ea99 AS runtime-base
 WORKDIR /app
 RUN groupadd --system aegis && useradd --system --gid aegis aegis
 USER aegis

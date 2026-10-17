@@ -53,6 +53,7 @@ export class ApiError extends Error {
     public status: number,
     message: string,
     public code: string,
+    public requestId: string | null = null,
   ) {
     super(message);
   }
@@ -98,6 +99,7 @@ export async function api<T>(
       response.status,
       error.detail || "Request failed.",
       error.code || "REQUEST_FAILED",
+      error.requestId || response.headers.get("X-Request-ID"),
     );
   }
   return response.status === 204

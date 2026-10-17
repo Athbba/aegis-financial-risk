@@ -51,3 +51,8 @@ erDiagram
 `portfolio.simulation_start_date` is a nonnull date defaulting to 2022-01-03, backfilled for all existing rows and immutable through the application. It does not change actual `created_at` or any funding/execution/ledger timestamps. Funding is interpreted as available at that simulated day's opening. No financial history or balances are rewritten.
 
 The historical read model reconstructs cash/quantity/cost using executed orders and immutable sell allocations through the selected date. `order_portfolio_historical(portfolio_id, price_date, recorded_at, id)` supports bounded effective-date reads; `allocation_sell_order(sell_order_id)` supports per-execution immutable cost sums. Existing unique asset/date indexing supplies bulk marks. No valuation table or duplicated mutable financial snapshot is added. Tests upgrade an actual V1 fixture to V2 and verify preserved state and a correct reconstructed valuation.
+
+
+## Phase 4 additive operational data
+
+V3 adds `auth_attempt_window(bucket_key varchar(64) primary key, attempts integer > 0, expires_at timestamptz)` with an expiry index. Hashed account/client-purpose keys support atomic fixed-window admission and bounded expired-row deletion. This short-lived security state is intentionally mutable and separate from immutable financial/audit history. No financial columns, prices, timestamps or records are rewritten. The optional runtime role grants only required mutable columns and cannot disable immutable-history triggers; application ownership is still enforced above the database (no RLS claim).

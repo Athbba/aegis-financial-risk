@@ -18,10 +18,10 @@ Accepted when module boundaries, schema/invariants, financial assumptions, API c
 Detailed acceptance criteria and the convention chosen before implementation are in [PHASE2_PLAN.md](PHASE2_PLAN.md). Delivery covers immutable historical reconstruction, simple one-deposit returns, honest gaps, marked holdings/allocation, interactive charts, migration preservation and numerical/PostgreSQL/browser validation. Phase 3 builds on these interfaces.
 
 ## Phase 3 — risk (implemented; delivery evidence in TESTING.md)
-Delivered historical volatility, drawdown, 95/99% nearest-rank historical VaR, exposure concentration (not variance attribution), stress comparisons and explicit uncertainty/missing-data states. Pre-code methodology and deterministic fixtures: [PHASE3_RISK_SPEC.md](PHASE3_RISK_SPEC.md). Phase 4 is not started.
+Delivered historical volatility, drawdown, 95/99% nearest-rank historical VaR, exposure concentration (not variance attribution), stress comparisons and explicit uncertainty/missing-data states. Pre-code methodology and deterministic fixtures: [PHASE3_RISK_SPEC.md](PHASE3_RISK_SPEC.md). Phase 4 implementation and acceptance evidence are documented separately.
 
-## Phase 4 — reliability/security expansion (not started)
-Accept with threat-model review, authentication abuse controls, expanded failure/concurrency tests, audit retention policy, operational metrics and documented recovery/backup drills.
+## Phase 4 — reliability/security expansion
+See [PHASE4_PLAN.md](PHASE4_PLAN.md) for the pre-code audit, [PHASE4_SECURITY_REVIEW.md](PHASE4_SECURITY_REVIEW.md) for implemented controls and residual limits, and TESTING.md for executed evidence. Stop before Phase 5.
 
 ## Phase 5 — presentation/deployment (not started)
 Accept with visual/accessibility review, reproducible demos, deployment and rollback validation, screenshots, and final portfolio documentation. Phase 1 styling is functional groundwork; deployment is not claimed.

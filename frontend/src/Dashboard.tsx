@@ -277,7 +277,7 @@ export function Dashboard({
             <span>
               Educational investment simulation · No brokerage connectivity
             </span>
-            <span>PHASE 03</span>
+            <span>PHASE 04</span>
           </footer>
         </main>
       </div>

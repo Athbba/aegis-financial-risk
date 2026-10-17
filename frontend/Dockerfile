@@ -1,4 +1,4 @@
-FROM nginxinc/nginx-unprivileged:stable-alpine AS runtime-base
+FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:782bb89768cc87b7f95c18b95baa1af250e5d451f26794f59363540161147c01 AS runtime-base
 COPY --chown=nginx:nginx --chmod=644 nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 8080
 

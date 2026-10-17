@@ -1,0 +1,9 @@
+# Optional: migrate/seed separately, then provision ops/runtime-role.sql before starting.
+# This override never creates or deletes the active database volume.
+services:
+  backend:
+    environment:
+      DATABASE_USERNAME: ${AEGIS_RUNTIME_USER:?Set a dedicated aegis_runtime role}
+      DATABASE_PASSWORD: ${AEGIS_RUNTIME_PASSWORD:?Set runtime role password}
+      SPRING_FLYWAY_ENABLED: "false"
+      AEGIS_SEED_DATA: "false"

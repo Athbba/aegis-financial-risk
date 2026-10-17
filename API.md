@@ -49,7 +49,7 @@ Example order body:
 
 Use a unique key (e.g. UUID) for each intended order, 8–80 ASCII letters/digits/hyphens/underscores. The key's scope is the portfolio. Reuse **the same key and payload** after uncertain responses; never invent a new key merely because a request timed out. The original execution is replayed without cash/lot/history changes. Numerically equivalent quantities such as `1` and `1.000000` are equivalent. Reuse with different symbol/side/quantity/date returns 409. Failed orders do not reserve keys.
 
-The browser preserves a pending request key while its trade form remains mounted. It does not persist pending keys across reloads or portfolio switching. After an uncertain response, retry the unchanged form before leaving it; after a reload inspect transaction history before placing another order. A durable client-side pending-request journal is later reliability work.
+The browser saves unresolved intent/key in tab sessionStorage before sending it, scoped to the portfolio. It survives reload and portfolio switching in that tab; inputs remain locked until confirmed or definitively rejected. Refresh/login recovery checks the exact key endpoint below. Missing lookup does not prove an in-flight request cannot commit: retry the **same** payload/key. Transport/5xx/auth/throttle/conflict errors retain the journal; definitive 400/422 errors clear it. Closing/clearing tab storage requires manual transaction-history review.
 
 Executions include `id`, `portfolioId`, `symbol`, `side`, `quantity`, `executionPrice`, `grossAmount`, `realizedPnl`, `priceDate`, `executedAt`, `recordedAt`, `idempotencyKey`. A buy's realized P/L is zero; sells use FIFO settled cost. Exact execution price has four decimals; totals/cost/P&L have two. `executedAt` is the fixed fictional 21:00 UTC historical close; `recordedAt` is actual processing time. See [financial assumptions](FINANCIAL_ASSUMPTIONS.md).
 
@@ -136,3 +136,21 @@ X-XSRF-TOKEN: <session-csrf-token>
 ```
 
 Scenario names are 1–60 characters; shocks −100…+100 percentage points with ≤4 decimals; ≤100 overrides, each naming a held asset. Overrides replace the common shock, not add to it. Missing/null scenarios and inputs are rejected. Cash is never shocked. Result values reconcile at the aggregate-position cent rounding convention. A stress request never creates an order or financial/audit record. No idempotency key is needed for this read-only computation. See [the complete formulas](docs/PHASE3_RISK_SPEC.md).
+
+
+## Phase 4 — recovery, abuse protection and operations
+
+| Endpoint | Security / behavior |
+| --- | --- |
+| GET `/api/portfolios/{id}/orders/by-key/{key}` | Owner-scoped exact stored execution; original 8–80-character key syntax. Foreign/missing resource 404, anonymous 401. A 404 is only “not visible now”; never infer that a pending transaction cannot commit. |
+| GET `/api/portfolios/{id}/reconciliation` | Owner-scoped read-only repeatable-read report: checkedAt, named checks (passed boolean), CONSISTENT/INCONSISTENT. Compares cash, quantities/cost and execution/ledger/audit relationships without repair. Existing analytics bounds/timeouts apply. |
+| GET `/actuator/health[/readiness|/liveness]` | Public minimal status. Readiness includes database availability; liveness is separate. No database/credential details. |
+| GET `/actuator/metrics[/{name}]` | Separate stateless HTTP Basic `operator` using configured BCrypt hash; not available through ordinary user sessions. Disabled without operator configuration. Other sensitive Actuator endpoints remain unexposed. |
+
+Authentication attempts are persisted in PostgreSQL fixed windows. Login: 30 attempts per transport client / 5 minutes plus 5 per normalized account / 15 minutes (including unknown accounts). Successful login resets its account bucket only. Registration: 30 attempts per client / hour. Exhaustion returns **429 AUTH_RATE_LIMITED**, a conservative whole-second **Retry-After**, and a safe request reference. No permanent lock is introduced. Forwarded address headers do not bypass the client limit; users sharing Nginx/NAT also share the budget. Invalid requests with valid CSRF still consume admission budget; requests failing CSRF cannot authenticate. Registration success/conflict can still reveal availability; no email-verification claim is made.
+
+Backend and Nginx cap JSON bodies at 64 KiB (413 REQUEST_TOO_LARGE); streamed/unknown-length bodies are capped too. Jackson nesting/string/number limits are 20 / 8192 / 100. Existing DTO precision, date, lookback, pagination and scenario caps remain. Responses retain exact decimal strings. Server-generated **X-Request-ID** appears on backend responses, and problem bodies include **requestId**; caller-supplied request IDs are ignored. Routine validation and business errors do not include exception messages, SQL or sensitive values. Proxy-level rejections can occur before a backend request ID is assigned.
+
+Session cookies remain HttpOnly and SameSite Strict, Secure under COOKIE_SECURE=true. CSRF cookies also explicitly use Strict/configured Secure. Registration/login/logout and all financial POSTs retain CSRF. There is no cross-origin access grant. Ordinary sessions still live in one JVM; after restart reauthenticate, then resume recovery of the saved intent. A restarted server does not forget committed idempotency keys, which live with immutable executions in PostgreSQL. Operator credentials are separate and never establish a portfolio user session. Use HTTPS/private transport for operational credentials.
+
+Operational metric names: `aegis.requests` (bounded route/method/outcome duration and count), `aegis.trades` (side and committed/replayed/rejected/rolled_back counts), framework `http.server.requests` and Hikari/JVM metrics. Labels omit user/portfolio IDs, raw URLs and keys. Metrics reset after restart; execution/ledger/audit records remain durable. [Operations runbook](docs/PHASE4_OPERATIONS.md).

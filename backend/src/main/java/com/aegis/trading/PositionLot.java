@@ -6,6 +6,7 @@ import java.time.*;
 import java.util.UUID;
 
 @Entity
+@org.hibernate.annotations.DynamicUpdate
 @Table(name = "position_lot")
 public class PositionLot {
   @Id private UUID id;

@@ -10,21 +10,21 @@ import com.aegis.market.*;
 import com.aegis.portfolio.*;
 import com.aegis.shared.DomainException;
 import com.aegis.trading.*;
-import com.fasterxml.jackson.databind.*;
+import tools.jackson.databind.*;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.*;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.*;
 
 @SpringBootTest
@@ -32,7 +32,7 @@ import org.testcontainers.junit.jupiter.*;
 @Testcontainers
 class PlatformIntegrationTest {
   @Container @ServiceConnection
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17-alpine");
+  static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17-alpine");
 
   @Autowired MockMvc mvc;
   @Autowired ObjectMapper json;

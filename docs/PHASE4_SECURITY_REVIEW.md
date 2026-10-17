@@ -1,0 +1,65 @@
+# Phase 4 security and engineering review
+
+Review date: 2026-10-17. Baseline PR #3 and merge CI were verified before implementation; see [PHASE4_PLAN.md](PHASE4_PLAN.md). The application remains an educational financial simulator. This is an engineering review with automated evidence, not an independent penetration audit or a production-readiness certification.
+
+## Dependency assessment and resolution
+
+| Finding | GitHub reviewed scanner | Official Spring advisory | Exposure conditions in the old application |
+| --- | --- | --- | --- |
+| [GHSA-j9f9-w8pj-32f8](https://github.com/advisories/GHSA-j9f9-w8pj-32f8), CVE-2026-47890 | Critical, CVSS 9.8 | [Spring: Low](https://spring.io/security/cve-2026-47890/) | MVC/WebFlux must stream rendered view fragments over SSE, with attacker control over data streamed to other users. AEGIS used JSON REST and did not implement fragment streaming. |
+| [GHSA-pc63-qcmh-9cmg](https://github.com/advisories/GHSA-pc63-qcmh-9cmg), CVE-2026-47884 | Critical, CVSS 9.8 | [Spring: Medium](https://spring.io/security/cve-2026-47884/) | XsltView plus a wildcard `/**` mapping that implicitly chooses a rendered view. AEGIS used explicit REST endpoints and a separately served React SPA, with no XSLT views. |
+
+Severity labels describe different assessments; the GitHub findings were never silently downgraded or suppressed. The prior application lacked the affected features, but its dependency was still in the vulnerable version range.
+
+Official Spring lists Framework **6.2.20 as enterprise-support-only** and **7.0.9 as an open-source fix** for both advisories. Maven Central's latest public 6.2 release was 6.2.19. Phase 3's statement that no 6.2 patch was available needs this availability distinction: there is a commercial patch, not an available public patch for this project's no-paid-service constraints.
+
+A supported Boot 4 prototype passed all 72 original backend tests before adoption. The implementation upgrades **Spring Boot 3.5.16 → 4.0.8**, with its managed **Framework 7.0.9 / Security 7.0.7**. It does not force Framework 7 under Boot 3. The [official migration guide](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide) drove starter/module changes, Servlet 6.1/Tomcat 11, springdoc 3.0.3, Jackson 3 imports and Testcontainers 2 coordinates. JDK 21 and every financial formula remain unchanged. Decimal JSON string serialization, API/OpenAPI/error contracts and all numerical fixtures remain regression-tested.
+
+The new BOM's earlier Jackson/Tomcat maintenance versions triggered additional findings during the expanded scan. Compatible fixes pin **Jackson 3.1.7**, transitive **Jackson 2.21.7** (OpenAPI/tooling), and **Tomcat 11.0.25** within the supported version lines. No incompatible major override or advisory suppression is used. Full regressions were rerun after these changes. Final exact-coordinate Java scan: **158 compile/runtime/test/provided dependencies, zero reported advisories, zero query errors**; [full result](phase4-java-audit.json). The original two Spring findings are resolved by the patched framework, not by an ignore file. A clean known-advisory index does not prove absence of unknown defects.
+
+## Authentication, authorization and input controls
+
+- Persistent PostgreSQL attempt windows limit login clients to **30 attempts / 5 minutes**, registration clients to **30 / hour**, and normalized login accounts to **5 attempts / 15 minutes**. Admission uses atomic UPSERT; expired entries are removed in bounded indexed batches. Limits survive serving-process restarts. Successful login clears its account window, not the client limit. Temporary lockouts expire without an administrator; no permanent account lock is introduced.
+- Unknown and existing accounts use the same account-budget mechanism and generic credential failures. Buckets store SHA-256 keys rather than raw email/IP; hashing is pseudonymization, not encryption. Registration still reveals availability through success/conflict behavior, since it creates an authenticated account without email verification; that limitation is explicit.
+- The limiter uses the transport peer address and ignores attacker-supplied forwarded headers. Behind Nginx/NAT, users share a conservative client budget. This is single-database abuse protection, not a botnet defense; a trusted proxy identity policy, CAPTCHA or account verification would need a separate justified design. Distributed guessing and temporary lockout denial-of-service remain possible. Query failures fail closed.
+- JSON bodies are capped at **64 KiB**, including unknown/chunked lengths, before MVC parsing. Nginx has the same cap and a safe problem response. Jackson limits nesting to 20, string tokens to 8,192 characters and number tokens to 100 characters. Existing strict DTO/domain/date/pagination/scenario limits remain.
+- BCrypt cost 12, session rotation, 30-minute HttpOnly/SameSite Strict cookies, CSRF on every state-changing user route and exact owner checks are retained. XSRF cookies explicitly use SameSite Strict and the configured Secure flag. `COOKIE_SECURE=true` and HTTPS are required outside local HTTP development. No permissive CORS is added; cross-origin preflight receives no access grant.
+- Operations metrics have a separate stateless BCrypt-protected `operator` identity, disabled without configuration. Ordinary user sessions cannot access them, and operator Basic credentials do not authenticate portfolio API sessions. Other sensitive Actuator endpoints remain unexposed. Security headers and same-origin CSP remain active.
+
+## Financial reliability and debugging
+
+Original portfolio locks, transaction boundaries, idempotency comparison/uniqueness, FIFO math and immutable triggers are preserved. The only financial write-path additions observe transaction completion and use dirty-column updates to support narrow database grants. COMMITTED, replay, expected rejection and infrastructure rollback counters/logs are recorded after transaction completion, not before commit.
+
+An unresolved browser intent is saved before submission in tab sessionStorage. It contains only the request and random idempotency key, no password/session token. Inputs stay frozen while ambiguous. Refresh/login recovery checks the **owner-scoped exact key lookup**; a missing lookup does not prove an in-flight operation cannot commit, so retries retain the same key/payload. Network failures, 5xx, auth failures, throttles and conflicts retain the journal. Definitive 400/422 rejections clear it. Closing/clearing tab storage loses the journal and requires manual history review; different tabs can still submit distinct intentional keys. Session expiry/restart requires reauthentication, not a new financial intent.
+
+PostgreSQL tests retain concurrency, rollback/fault injection, idempotent replay and full financial immutability checks. New tests exercise telemetry outcomes and read-only reconciliation. Desktop/mobile journeys inject a request that never reaches the backend and a **committed response loss**, reload the page, restart the actual serving container, sign in again and recover exactly one execution/two ledger and audit rows. No financial repair or history rewriting is performed.
+
+## Database and operations
+
+V3 adds only short-lived auth buckets and their expiry index. A V2 fixture upgrade preserves all financial fingerprints. The optional least-privilege profile uses a dedicated non-owner runtime role, a separate short-lived `--migrate-only` process, no migration credentials in the serving container, no runtime seeding, no DDL/price/history mutation grants and only required mutable-column updates. Tests actually run authentication, buy, partial FIFO sell and reconciliation under those privileges and deny prohibited statements. The compatible default local Compose profile still uses its existing owner role; deployment must deliberately adopt the tested override. Grants are application-wide, not row-level security.
+
+The real backup/restore scripts were exercised only against disposable Testcontainers PostgreSQL. Custom-format dump/manifest, new restore database, financial row fingerprints and refusal of active/existing targets were verified. No active user volume was dropped, restored or used for destructive tests. These drills do not provide PITR, offsite backup retention, key management or a production recovery-time objective.
+
+Server-generated correlation IDs, safe problem references and bounded-route metrics support debugging without bodies, cookies, tokens, session IDs or raw user/query data in application/proxy access logs. Raw Hibernate SQL error logging is disabled; unexpected failures log only safe exception type. Nginx access logs contain method/status/duration/backend request ID; routine raw proxy error logs are suppressed. Third-party startup/critical diagnostics and any future debug configuration still require review. Metrics reset at process restart; immutable database records are authoritative. Liveness, readiness/database probes and separately protected Actuator metrics use the existing stack. No monitoring service is added.
+
+Runtime containers are digest-pinned, non-root, capability-free, no-new-privileges and read-only, with bounded tmpfs and process counts. See [operations instructions](PHASE4_OPERATIONS.md) for credentials, migration/grants, backup/restore, reconciliation and diagnostics. See [actual measurements](PHASE4_BENCHMARKS.md) for workload/environment limits; benchmarks are not a capacity or production-readiness claim.
+
+## Scan scope, evidence and residual limitations
+
+Java exact-coordinate checks include test dependencies; npm checks include the locked frontend tree. Trivy runtime-image findings, scan versions and network constraints are recorded with executed results in TESTING.md. Gitleaks checks available history and the nonignored source export, with redacted reports kept outside Git. Local credentials, dumps and private financial records are excluded. GitHub repository Dependabot alerts remain disabled unless separately configured; the public reviewed-advisory checks do not depend on that feature.
+
+Remaining operational gaps include public TLS/reverse-proxy deployment review, credential rotation/secret-store integration, email verification/recovery, distributed abuse controls, shared session management, offsite/PITR restoration, alert routing, independent penetration/accessibility/load audits and controlled concurrent deployment benchmarks. These are not represented as solved by a passing test suite. Phase 5 has not begun.
+
+### Remaining runtime-image findings
+
+Trivy 0.76.0 scanned the **actual digest-pinned runtime images**, including OS and embedded-language inventories, using the official GHCR vulnerability databases. No ignore list or severity suppression was used. [Sanitized per-finding inventory](phase4-image-audit.json):
+
+| Image | Critical | High | Medium | Low | Unknown |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| API / Temurin Ubuntu 26.04 | 0 | 3 | 61 | 5 | 1 |
+| UI / Nginx Alpine 3.24.2 | 0 | 0 | 1 | 0 | 0 |
+| PostgreSQL 17 Alpine 3.24.2 | 1 | 24 | 31 | 3 | 2 |
+
+These findings **remain unresolved**. The API's three High findings are Go standard-library CVEs in `/usr/bin/pebble` (Go 1.27.1; fixed 1.27.2). The serving entrypoint is Java and never invokes pebble; this reduces the direct application attack path but does not patch the binary. PostgreSQL's Critical/High findings are in `/usr/local/bin/gosu` (Go 1.24.6). The official entrypoint uses gosu locally to switch to the postgres user when started as root; it is not a Go HTTP/TLS server. Many bundled-library exploit prerequisites therefore differ from a network-facing Go service. This is an exposure assessment, not proof that every finding is unreachable or permission to discard them. Replacing privileged entrypoint tooling requires separately verified provenance and database startup/upgrade testing; no unverified binary replacement was made.
+
+The UI finding is zlib **CVE-2026-85091**, installed `1.3.2-r0`, fixed `1.3.2-r1`. A disposable attempt at the supported APK upgrade failed because the environment returned **HTTP 403** for the official Alpine repositories. No TLS bypass, stale-index override or unverified mirror was used. Other OS findings include distribution packages for which the scan lists no fix; consult the exact inventory rather than assuming a patched tag exists. The current publisher runtime tags were pulled and their actual digests pinned, but a fresh tag alone does not establish security. Rebuild with verified publisher/package fixes and rerun this scan when they become available. Container privilege reduction limits impact; it does not resolve these CVEs. Do not expose this educational stack as a production service on the basis of the Java scan.

@@ -1,8 +1,8 @@
 # Progress
 
-Status: **Phases 0–3 implemented and locally verified. Stop before Phase 4.**
+Status: **Phases 0–4 implemented. Phase 4 verification and residual risks are recorded below. Stop before Phase 5.**
 
-Phase 1 was merged by PR #1; Phase 2 was merged by PR #2 (`37dda5c`). Phase 3 starts from updated main on `feature/aegis-phase-3`. Its methodology was committed before code (`6f02681`). No automatic merge or Phase 4 work is authorized.
+Phase 1 was merged by PR #1; Phase 2 was merged by PR #2 (`37dda5c`). Phase 3 started from updated main on `feature/aegis-phase-3`. Its methodology was committed before code (`6f02681`). PR #3 was subsequently merged as `7870135`; its main CI passed before Phase 4 began. No automatic merge is authorized.
 
 ## Phase 1 foundation retained
 
@@ -43,14 +43,13 @@ Codex install/start instructions and helper scripts are preserved in docs/CLOUD_
 
 This cloud's standard source-image Maven build was blocked by build-container DNS; the tested prebuilt-artifact path is documented. Managed Playwright download domains were previously denied; installed Chromium 154 ran the suites. GitHub Actions push and PR verification passed for implementation commit 3c810e873eb044edc6c80a874fe6542358b2d353, including managed Chromium browser tests; see TESTING.md for run links and PR #2 for current checks. Phase 2 native browser testing, public deployment and new-task restoration remain unverified.
 
-Local-development security limits remain: one-JVM sessions, no account abuse/recovery controls or independent penetration/accessibility/load audit, no dedicated runtime DB role/production backup drills. Pending order recovery across browser reloads remains future reliability work. Exact-date price gaps are a deliberate convention, not silently repaired data.
+At the Phase 2 milestone, local-development limits included one-JVM sessions, no account abuse/recovery controls, no dedicated runtime DB role or backup drills, and no pending-order reload recovery. Phase 4 addresses several of these below; independent penetration/accessibility/load audits remain absent. Exact-date price gaps are a deliberate convention, not silently repaired data.
 
 ## Not started
 
-- **Phase 4:** expanded security, observability, audit operations and reliability.
 - **Phase 5:** final visual/accessibility refinement, optional light theme, deployment and presentation.
 
-No benchmarks, investment-return annualization, TWR/MWR, external market prices, additional cash flows or real trading were added. Phase 3 annualizes volatility only. Correlation matrices and variance attribution remain absent; exposure concentration is implemented.
+Before Phase 4, no benchmarks, investment-return annualization, TWR/MWR, external market prices, additional cash flows or real trading were added. Phase 3 annualizes volatility only. Correlation matrices and variance attribution remain absent; exposure concentration is implemented.
 
 
 ## Phase 3 delivered
@@ -64,4 +63,17 @@ No benchmarks, investment-return annualization, TWR/MWR, external market prices,
 - Cohesive Risk Lab tab, responsive real-data charts and tables, tooltips, keyboard controls, loading/unavailable/error/retry states. Original valuation/trading interfaces retained.
 - Updated README/API/architecture/assumptions/teaching docs and five Phase 3 interview questions; reproducible running-app journey.
 
-Phase 3 verification: **72 backend tests** (31 pure numerical + 41 PostgreSQL integration) passed with no failures/errors/skips; strict TypeScript/production build and formatting passed; **8 desktop/mobile Playwright cases** passed against packaged Spring Boot, PostgreSQL and production React/Nginx. All original 55 backend and six browser tests are included. Dependency scan fixes compatible inherited libraries; final Java scan retains two Spring MVC advisories on one package, explicitly reviewed/documented in [PHASE3_SECURITY.md](docs/PHASE3_SECURITY.md). npm audit and Gitleaks report no findings within their documented scope. See TESTING.md for actual commands and limits. No production-readiness claim; Phase 4 remains unstarted.
+Phase 3 verification: **72 backend tests** (31 pure numerical + 41 PostgreSQL integration) passed with no failures/errors/skips; strict TypeScript/production build and formatting passed; **8 desktop/mobile Playwright cases** passed against packaged Spring Boot, PostgreSQL and production React/Nginx. All original 55 backend and six browser tests are included. Dependency scan fixes compatible inherited libraries; final Java scan retains two Spring MVC advisories on one package, explicitly reviewed/documented in [PHASE3_SECURITY.md](docs/PHASE3_SECURITY.md). npm audit and Gitleaks report no findings within their documented scope. See TESTING.md for actual commands and limits. No production-readiness claim; Phase 4 supersedes that dependency assessment.
+
+## Phase 4 delivered
+
+- Audited merged Phase 3 and successful main CI; committed the evidence-based plan before implementation (`d5f417a`).
+- Supported Boot 4.0.8 / Framework 7.0.9 migration resolves both Spring MVC advisories. Expanded Java scan covers 158 including test/provided coordinates, zero findings/errors. Compatible Jackson/Tomcat maintenance patches retained all numerical/API contracts.
+- Persistent atomic login/client/account throttles, temporary expiry, bounded request parsing, explicit cookie/header controls, isolated operations identity and negative ownership/security tests.
+- Durable tab-local pending intent, exact owner-scoped idempotency lookup and real response-loss/refresh/backend-restart recovery. Original immutable history, locks, transactions and FIFO preserved. Read-only reconciliation detects cash/lot/reference drift without repairs.
+- Safe request correlation, structured bounded logs, transaction completion metrics, separate readiness/liveness/database probes and protected operations metrics.
+- Optional tested least-privilege runtime profile, migration-only process, non-destructive V3, private backup/checksum/new-database restore scripts and real disposable recovery/grant/migration tests. Compatible default local database owner mode remains an explicit limitation.
+- Digest-pinned restricted runtime containers and actual image scans; unresolved base-image findings remain (including PostgreSQL helper-library Critical/High findings). APK remediation was blocked by official repository HTTP 403. See [security review](docs/PHASE4_SECURITY_REVIEW.md), not a production-readiness claim.
+- Reproducible measured benchmark, operational/security/architecture/API documentation and five additional interview questions. No new infrastructure or financial-engine redesign.
+
+Verification: **88 backend tests** plus a separate benchmark test passed; frontend TypeScript/build/formatting and npm audit passed; Gitleaks source/history clean. All **10 desktop/mobile browser tests** passed, including real backend restart recovery. Details are recorded in TESTING.md. Phase 5 remains unstarted.

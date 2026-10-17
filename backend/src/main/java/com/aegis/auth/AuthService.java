@@ -17,12 +17,17 @@ public class AuthService {
   private final UserRepository users;
   private final PasswordEncoder passwords;
   private final AuthenticationManager authentication;
+  private final AttemptLimiter attempts;
 
   public AuthService(
-      UserRepository users, PasswordEncoder passwords, AuthenticationManager authentication) {
+      UserRepository users,
+      PasswordEncoder passwords,
+      AuthenticationManager authentication,
+      AttemptLimiter attempts) {
     this.users = users;
     this.passwords = passwords;
     this.authentication = authentication;
+    this.attempts = attempts;
   }
 
   @Transactional
@@ -40,8 +45,13 @@ public class AuthService {
 
   public Authentication authenticate(String email, String password) {
     checkPasswordLength(password);
-    return authentication.authenticate(
-        UsernamePasswordAuthenticationToken.unauthenticated(normalize(email), password));
+    String normalized = normalize(email);
+    attempts.acquire("login-account", normalized, 5, java.time.Duration.ofMinutes(15));
+    Authentication result =
+        authentication.authenticate(
+            UsernamePasswordAuthenticationToken.unauthenticated(normalized, password));
+    attempts.clear("login-account", normalized);
+    return result;
   }
 
   public Identity identity(String email) {
