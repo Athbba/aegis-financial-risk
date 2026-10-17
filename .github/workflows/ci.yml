@@ -126,7 +126,6 @@ jobs:
           path: |
             ${{ runner.temp }}/aegis-evidence/*-scan.json
             ${{ runner.temp }}/aegis-evidence/*-sbom.json
-            ${{ runner.temp }}/aegis-evidence/*-oci.tar
             ${{ runner.temp }}/aegis-evidence/manifest.json
             ${{ runner.temp }}/aegis-evidence/rollback.json
             ${{ runner.temp }}/aegis-evidence/rollback-scanner-version.json
