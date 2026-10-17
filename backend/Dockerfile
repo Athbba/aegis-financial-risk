@@ -2,7 +2,10 @@ FROM eclipse-temurin:21-jre-alpine@sha256:51ab5e3302e7141ce665ca3ea85e8b5cd648ea
 ARG SOURCE_COMMIT=unknown
 LABEL org.opencontainers.image.revision=$SOURCE_COMMIT
 WORKDIR /app
-RUN addgroup -S aegis && adduser -S -G aegis aegis
+# No server-side font/image rendering: all financial charts are client-side SVG.
+# Remove optional font packages via the publisher APK database, never arbitrary shared-library deletion.
+RUN apk --no-network del fontconfig ttf-dejavu \
+    && addgroup -S aegis && adduser -S -G aegis aegis
 USER aegis
 EXPOSE 8080
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=70", "-jar", "app.jar"]
