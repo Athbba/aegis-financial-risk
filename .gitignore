@@ -31,6 +31,8 @@ frontend/test-results/
 frontend/*.tsbuildinfo
 node_modules/
 .cache/
+__pycache__/
+*.pyc
 .tools/
 coverage/
 *.log

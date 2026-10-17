@@ -1,14 +1,22 @@
 # AEGIS
 
-**Financial Risk & Trading Analytics Platform — Phase 3**
+**Financial Risk & Trading Analytics Platform — Phase 4**
 
-AEGIS is an educational investment simulator built with Java 21, Spring Boot 3.5, PostgreSQL and React/TypeScript. The application combines exact decimal settlement and auditable FIFO accounting with dated portfolio valuation, simple performance returns and interactive charts.
+AEGIS is an educational investment simulator built with Java 21, Spring Boot 4.0, PostgreSQL and React/TypeScript. The application combines exact decimal settlement and auditable FIFO accounting with dated portfolio valuation, simple performance returns and interactive charts.
 
 **Simulation only.** All default assets and prices are deterministic synthetic data. No brokerage integration, real trades or investment advice. The project is not an institution-grade financial risk system.
 
 ## Implemented
 
-Phase 1 trading/accounting and Phase 2 valuation are retained. Phase 3 adds:
+Phases 1–3 financial behavior and visual identity are retained. Phase 4 adds:
+
+- A tested Spring Boot 4 / Framework 7 migration resolving the two earlier Spring MVC advisories, with compatible Jackson/Tomcat maintenance fixes.
+- Persistent login/registration throttles, temporary account budgets, JSON byte/parser limits, strict cookies/CSRF/ownership and operator-only read-only metrics.
+- Server-generated request IDs, safe structured logs, health/readiness/liveness and counters that distinguish commits, replays, business rejections and rollbacks.
+- Tab-persistent pending-order recovery across refresh, failed responses and server restart, with owner-scoped key lookup and read-only book reconciliation.
+- A separate migration command, tested optional least-privilege runtime role, safe disposable backup/restore scripts, pinned/hardened runtime containers and measured benchmarks.
+
+Phase 3 provides:
 
 - A pure historical risk engine: aligned fixed-exposure returns, sample volatility and √252 annualization, nearest-rank one-day VaR95/VaR99, and actual reconstructed portfolio maximum drawdown.
 - A responsive Risk Lab with backend-driven exposure/distribution charts, explained sample requirements, weekday gaps, keyboard tooltips and explicit unavailable states.
@@ -111,6 +119,22 @@ Stop local Java/Vite processes first if they occupy ports 8080/5173. This path p
 
 Formulas, decimal precision, limits and hand-calculated fixtures: [Phase 3 methodology](docs/PHASE3_RISK_SPEC.md). API examples: [API.md](API.md). Five new interview questions: [MENTORING.md](docs/MENTORING.md).
 
+### Reproduce Phase 4 recovery and operations
+
+The default Compose profile preserves the existing local developer database/configuration. For separate migration/runtime privileges, follow [PHASE4_OPERATIONS.md](docs/PHASE4_OPERATIONS.md) and its tested optional override; the default owner role is not a deployment security recommendation.
+
+An uncertain order now keeps a tab-local journal and locks its inputs. Reload/sign in again: AEGIS checks the original portfolio/key before allowing another intent. **Retry saved order** always sends the exact saved payload/key. Closing the tab or manually clearing storage requires reviewing transaction history. The end-to-end test injects both a never-sent request and a response lost after PostgreSQL commit, restarts the actual backend and verifies one execution.
+
+```bash
+# With the documented Compose stack running (restarts its backend twice):
+AEGIS_E2E_RESTART_BACKEND=true PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium \
+  npm --prefix frontend run test:e2e
+# Reproducible, isolated benchmark; never uses the active Compose database:
+./scripts/cloud-maven.sh -B -ntp -Dtest=EngineeringBenchmark test
+```
+
+Health probes: `/actuator/health`, `/actuator/health/readiness`, `/actuator/health/liveness`. Actuator metrics require a separately configured `operator` BCrypt credential; normal application sessions have no access. Use the server-generated `X-Request-ID`/problem reference to find safe application/proxy logs. Login budgets are 30/client/5 minutes and 5/account/15 minutes; registration is 30/client/hour, with temporary 429/Retry-After responses. See API/operations docs for exact policy, proxy/NAT limitations and manual recovery.
+
 ## Screenshots
 
 Captured from the running application using only the fixed-seed synthetic dataset and automated browser-created simulated trades:
@@ -149,12 +173,16 @@ The backend test suite requires Docker and starts an isolated PostgreSQL databas
 | [API](API.md) | Session/CSRF flow, endpoint contracts and retry semantics |
 | [Financial assumptions](FINANCIAL_ASSUMPTIONS.md) | Rounding, FIFO formulas, synthetic data, missing prices, omissions |
 | [Phase 3 risk specification](docs/PHASE3_RISK_SPEC.md) | Formulas, thresholds, gaps, precision and fixtures established before implementation |
-| [Security scan evidence](docs/PHASE3_SECURITY.md) | Actual dependency/secret scan scope, fixes and remaining findings |
+| [Phase 4 engineering audit](docs/PHASE4_PLAN.md) | Concrete risks and acceptance tests established before implementation |
+| [Current security review](docs/PHASE4_SECURITY_REVIEW.md) | Official advisory comparison, resolved dependencies, controls and residual limits |
+| [Operations and recovery](docs/PHASE4_OPERATIONS.md) | Migration/runtime roles, backups, disposable restores, metrics and diagnostics |
+| [Measured benchmarks](docs/PHASE4_BENCHMARKS.md) | Actual environment, workloads, latency measurements and limits |
+| [Earlier security evidence](docs/PHASE3_SECURITY.md) | Historical Phase 3 findings and their Phase 4 resolution |
 | [Decisions](DECISIONS.md) | Important choices and alternatives |
 | [Testing](TESTING.md) | Commands, evidence and scope |
 | [Progress](PROGRESS.md) | Delivered and unfinished functionality |
 | [Cloud environment rebuild](docs/CLOUD_ENVIRONMENT.md) | Saved Codex installation/startup instructions and state boundaries |
 | [Phase plan](docs/PLAN.md) | Explicit acceptance criteria for Phases 0–5 |
-| [Mentoring notes](docs/MENTORING.md) | Phase explanations and twenty interview questions with sample answers |
+| [Mentoring notes](docs/MENTORING.md) | Phase explanations and twenty-five interview questions with sample answers |
 
-The repository stops after Phase 3. Phases 4–5 have not begun. The current Java advisory scan has two remaining Spring MVC advisories; see [scan scope and limitations](docs/PHASE3_SECURITY.md). This is not a production-readiness claim.
+The repository stops after Phase 4. Phase 5 has not begun. The two earlier Spring MVC advisories are resolved by the tested Framework 7.0.9 upgrade. Current scan scope, image findings and operational limitations are recorded in [the Phase 4 security review](docs/PHASE4_SECURITY_REVIEW.md) and [TESTING.md](TESTING.md). This is not a production-readiness claim.

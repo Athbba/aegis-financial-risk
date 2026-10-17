@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { api, ApiError } from "./api";
 import type { Portfolio, Quote, Execution } from "./api";
 import { Notice } from "./ui";
+import { loadIntent, saveIntent, clearIntent } from "./pendingOrder";
+import type { OrderIntent } from "./pendingOrder";
 import { usd, qty, priceUsd, message } from "./format";
 
 export function TradeTicket({
@@ -20,8 +22,56 @@ export function TradeTicket({
   const [quoteLoading, setQuoteLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  // Preserve the key for retries of an identical payload, including uncertain network responses.
-  const attempt = useRef<{ payload: string; key: string } | null>(null);
+  const [pending, setPending] = useState<OrderIntent | null>(null);
+  const [recovering, setRecovering] = useState(false);
+  const [storageError, setStorageError] = useState("");
+  function confirmed(execution: Execution, recovered = false) {
+    clearIntent(portfolio.id);
+    setPending(null);
+    setSuccess(
+      `${recovered ? "Recovered confirmation: " : ""}${execution.side === "BUY" ? "Bought" : "Sold"} ${qty(execution.quantity)} ${execution.symbol} for ${usd(execution.grossAmount)}. Synthetic close: ${execution.priceDate}, 21:00 UTC. ${execution.side === "SELL" ? `Realized P/L: ${usd(execution.realizedPnl)}.` : ""}`,
+    );
+    changed();
+  }
+  useEffect(() => {
+    let cancelled = false;
+    try {
+      const saved = loadIntent(portfolio.id);
+      if (saved) {
+        setPending(saved);
+        setSide(saved.request.side);
+        setSymbol(saved.request.symbol);
+        setQuantity(saved.request.quantity);
+        setDate(saved.request.priceDate);
+        setRecovering(true);
+        api<Execution>(
+          `/portfolios/${portfolio.id}/orders/by-key/${encodeURIComponent(saved.key)}`,
+        )
+          .then((execution) => {
+            if (!cancelled) confirmed(execution, true);
+          })
+          .catch((e) => {
+            if (!cancelled)
+              setError(
+                e instanceof ApiError && e.status === 404
+                  ? "No committed record is visible yet. Retry the saved order with its original key; it may still be in flight."
+                  : message(e),
+              );
+          })
+          .finally(() => {
+            if (!cancelled) setRecovering(false);
+          });
+      }
+    } catch {
+      setStorageError(
+        "Tab storage is unavailable or contains an invalid order intent. Review transaction history before submitting another order.",
+      );
+    }
+    return () => {
+      cancelled = true;
+    };
+    // Only inspect this portfolio's journal on mount; changing quote inputs never changes an unresolved intent.
+  }, [portfolio.id]);
   useEffect(() => {
     let cancelled = false;
     setQuoteLoading(true);
@@ -42,37 +92,52 @@ export function TradeTicket({
     };
   }, [date]);
   const quote = quotes.find((q) => q.symbol === symbol);
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  async function send(intent: OrderIntent) {
     setBusy(true);
     setError("");
     setSuccess("");
-    const body = { symbol, side, quantity, priceDate: date };
-    const payload = JSON.stringify(body);
-    if (attempt.current?.payload !== payload)
-      attempt.current = { payload, key: crypto.randomUUID() };
     try {
       const execution = await api<Execution>(
         `/portfolios/${portfolio.id}/orders`,
         "POST",
-        body,
-        attempt.current!.key,
+        intent.request,
+        intent.key,
       );
-      setSuccess(
-        `${execution.side === "BUY" ? "Bought" : "Sold"} ${qty(execution.quantity)} ${execution.symbol} for ${usd(execution.grossAmount)}. Synthetic close: ${execution.priceDate}, 21:00 UTC. ${execution.side === "SELL" ? `Realized P/L: ${usd(execution.realizedPnl)}.` : ""}`,
-      );
-      attempt.current = null;
-      changed();
+      confirmed(execution);
     } catch (e) {
+      // 400/422 are definitive validation/business rejections. Transport, 5xx, auth,
+      // throttle and conflict outcomes preserve the original intent for safe recovery.
+      if (e instanceof ApiError && (e.status === 400 || e.status === 422)) {
+        clearIntent(portfolio.id);
+        setPending(null);
+      }
       setError(
         message(e) +
-          (e instanceof ApiError
+          (e instanceof ApiError && [400, 422].includes(e.status)
             ? ""
-            : " Your order may have executed. Retry the unchanged order to reuse its request key."),
+            : " Confirmation is uncertain. Retry the saved order; its original key prevents a duplicate execution."),
       );
     } finally {
       setBusy(false);
     }
+  }
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (pending || storageError) return;
+    const intent: OrderIntent = {
+      key: crypto.randomUUID(),
+      request: { symbol, side, quantity, priceDate: date },
+    };
+    try {
+      saveIntent(portfolio.id, intent);
+      setPending(intent);
+    } catch {
+      setStorageError(
+        "Unable to save the order recovery key in this tab. Enable session storage before submitting.",
+      );
+      return;
+    }
+    await send(intent);
   }
   return (
     <section className="panel ticket">
@@ -86,7 +151,7 @@ export function TradeTicket({
         </span>
       </div>
       <form onSubmit={(e) => void submit(e)}>
-        <fieldset disabled={busy}>
+        <fieldset disabled={busy || pending !== null || !!storageError}>
           <legend className="sr-only">Simulated order details</legend>
           <div className="segmented" aria-label="Order side">
             <button
@@ -163,6 +228,24 @@ export function TradeTicket({
             <span aria-hidden="true">→</span>
           </button>
         </fieldset>
+        {pending && (
+          <Notice>
+            Saved order awaiting confirmation: {pending.request.side}{" "}
+            {pending.request.quantity} {pending.request.symbol} on{" "}
+            {pending.request.priceDate}. Inputs stay locked until resolved.{" "}
+            <button
+              type="button"
+              className="text-button"
+              disabled={busy || recovering}
+              onClick={() => void send(pending)}
+            >
+              {busy || recovering
+                ? "Checking confirmation…"
+                : "Retry saved order"}
+            </button>
+          </Notice>
+        )}
+        {storageError && <Notice error>{storageError}</Notice>}
         {error && <Notice error>{error}</Notice>}
         {success && <Notice>{success}</Notice>}
       </form>

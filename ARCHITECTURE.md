@@ -25,6 +25,7 @@ flowchart LR
 | `analytics` | Pure historical valuation, bounded execution/price reads, owner-scoped valuation/performance APIs |
 | `risk` | Pure aligned-return/volatility/VaR/drawdown/stress engine and bounded owner-scoped read APIs |
 | `trading` | Transaction orchestration, idempotency, chronological orders, FIFO position lots; pure `FinancialMath` |
+| `operations` | Safe request/transaction telemetry, owner-scoped reconciliation and separate migration-only command |
 | `shared` | Protocol-independent business failures |
 | `web` | Common errors, pagination, exact decimal JSON serialization, OpenAPI configuration |
 
@@ -49,7 +50,7 @@ Spring Security uses server-side sessions, a 30-minute inactivity timeout, sessi
 
 Nginx serves the built UI and proxies `/api` to the backend in Docker. Local development uses the Vite proxy. PostgreSQL persists through a named volume. Backend/frontend processes run without root. Health is exposed without database details, and application logs use JSON without passwords or full request bodies. A processed-order log is not a commit receipt; the durable audit row is authoritative.
 
-This is a local development baseline, not a production deployment. Sessions live in one JVM and disappear on restart. TLS termination, rate limiting, password recovery/verification, session-store scaling, backup/restore drills, dedicated migration/runtime DB roles, and comprehensive security monitoring are later work. Database admins can alter triggers; append-only protection is not cryptographic tamper resistance. Do not expose the local HTTP stack publicly.
+This is a local development baseline, not a production deployment. Sessions live in one JVM and disappear on restart. Phase 4 adds persistent abuse budgets, tested migration/runtime role separation and disposable backup/restore drills. Public TLS termination, password recovery/verification, shared sessions, offsite/PITR backup operations and comprehensive monitoring remain deployment work. Database admins can alter triggers; append-only protection is not cryptographic tamper resistance. Do not expose the local HTTP stack publicly.
 
 ## Why these choices
 
@@ -82,4 +83,19 @@ For T executions, D calendar days, A symbols and N aligned shocks, time is O(T l
 
 The React Risk Lab preserves the original dark palette, keeps performance/trading accessible, and renders only real API values. Chart numbers/bin counts are presentation transforms of backend observations. Financial sums/percentages come from Java decimal calculations. Requests use cancellation guards; changing analysis removes prior output while loading, and stress sliders debounce 250ms with stale-response protection. Charts include keyboard layers and exact data tables; controls, focus tooltips, responsive grids and scrollable tables support desktop/mobile journeys. Saved custom comparisons are session component state, reset when analysis/portfolio changes; no scenario persistence is claimed.
 
-See [risk specification](docs/PHASE3_RISK_SPEC.md) for the strict missing-weekday and sample policies. See [security scan evidence](docs/PHASE3_SECURITY.md) for compatible dependency fixes and remaining Spring MVC advisory limitations; the Phase 4 security/operations expansion is not started.
+See [risk specification](docs/PHASE3_RISK_SPEC.md) for the strict missing-weekday and sample policies. See [security scan evidence](docs/PHASE3_SECURITY.md) for compatible dependency fixes and remaining Spring MVC advisory limitations; the earlier Phase 3 findings are resolved and expanded in [PHASE4_SECURITY_REVIEW.md](docs/PHASE4_SECURITY_REVIEW.md).
+
+
+## Phase 4 engineering controls
+
+The supported Boot 4.0.8 / Framework 7.0.9 platform replaces the prior vulnerable MVC dependency. Springdoc 3, Jackson 3 module imports and Testcontainers 2 follow the official migration path; exact decimal serialization and every financial fixture remain unchanged. Same-line Jackson/Tomcat maintenance overrides address newly detected transitive advisories. No financial engine or dashboard redesign was required.
+
+`AttemptLimiter` uses atomic PostgreSQL UPSERTs with expiry timestamps and indexed, bounded cleanup. It stores hashes of account/client identities, not plaintext credentials or raw identities, and survives JVM restarts. Fixed windows deliberately impose temporary account limits rather than permanent locks. CSRF precedes authentication admission; parser/body caps precede MVC. Client identity uses the network peer, with no trust in arbitrary forwarded headers. Shared proxy/NAT budgets and distributed abuse limitations are documented.
+
+Security uses two chains: normal session/CSRF/ownership for application APIs, and stateless separately credentialed OPS access for read-only Actuator metrics, with minimal public health probes. A normal account cannot become OPS. Request filters produce server-generated correlation IDs, bounded-route timing/count metrics and safe problem references. Transaction synchronizations publish commit/replay/rejection/rollback only after completion. Application/proxy access logs omit bodies, raw queries, cookies, credentials and identities; raw SQL error details are disabled.
+
+The browser's sessionStorage journal is saved before POST, scoped to a portfolio, and freezes ambiguous input. Startup performs owner-scoped key lookup; replay always reuses the exact saved intent. It survives refresh and reauthentication after a server restart, while closing/clearing tab storage remains a manual recovery boundary. PostgreSQL locks and semantic idempotency validation remain the authoritative duplicate protection, not browser storage. The new read-only reconciliation service compares mutable cash/lots with immutable executions, allocations, ledger and audit relationships; it never repairs data.
+
+V3 adds only expiring authentication counters. An explicit `--migrate-only` entry path runs migrations/seeding and exits without HTTP/JPA. The optional runtime role profile disables runtime migration/seeding and grants only required reads/inserts and mutable-column updates; Hibernate dirty-column writes support those grants. Default local Compose compatibility is retained, with its owner-privilege limitation clearly documented. Database ownership remains powerful; this is not RLS or tamper-proof history. Disposable tests execute real grants, V2→V3 preservation, custom dump/restore, refusal of destructive targets and ordered financial row fingerprints.
+
+Runtime images are pinned to inspected digests and run non-root with no capabilities, no-new-privileges, read-only filesystems and bounded temporary storage/process counts. Graceful shutdown, bounded connection acquisition and readiness/liveness probes improve restart behavior using the existing JVM/PostgreSQL deployment. The benchmark harness measures actual serial in-process HTTP/SQL/JSON operations on isolated synthetic inputs; observed timings did not justify caches/new services or financial-algorithm changes. See [runbook](docs/PHASE4_OPERATIONS.md), [security review](docs/PHASE4_SECURITY_REVIEW.md) and [measured scope](docs/PHASE4_BENCHMARKS.md). Stop before Phase 5.

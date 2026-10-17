@@ -8,7 +8,8 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: process.env.E2E_BASE_URL || "http://localhost:5173",
-    trace: "retain-on-failure",
+    // Traces contain throwaway credentials/session cookies; never upload them in CI.
+    trace: process.env.CI ? "off" : "retain-on-failure",
     screenshot: "only-on-failure",
     launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
       ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }

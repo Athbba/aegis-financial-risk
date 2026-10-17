@@ -20,6 +20,8 @@ public class ApiErrors {
   public static ProblemDetail problem(HttpStatus status, String code, String detail) {
     ProblemDetail p = ProblemDetail.forStatusAndDetail(status, detail);
     p.setTitle(code);
+    String requestId = org.slf4j.MDC.get("requestId");
+    if (requestId != null) p.setProperty("requestId", requestId);
     p.setProperty("code", code);
     return p;
   }
@@ -50,6 +52,14 @@ public class ApiErrors {
         "Check field formats, required values, and allowed ranges.");
   }
 
+  @ExceptionHandler(com.aegis.auth.AttemptLimiter.Limited.class)
+  org.springframework.http.ResponseEntity<ProblemDetail> limited(
+      com.aegis.auth.AttemptLimiter.Limited e) {
+    return org.springframework.http.ResponseEntity.status(429)
+        .header("Retry-After", Long.toString(e.retryAfter()))
+        .body(problem(HttpStatus.TOO_MANY_REQUESTS, "AUTH_RATE_LIMITED", e.getMessage()));
+  }
+
   @ExceptionHandler(BadCredentialsException.class)
   ProblemDetail credentials() {
     return problem(
@@ -67,7 +77,7 @@ public class ApiErrors {
       HttpStatus status = HttpStatus.valueOf(error.getStatusCode().value());
       return problem(status, status.name(), error.getBody().getDetail());
     }
-    log.error("Unhandled request failure", e);
+    log.error("request_failure exceptionType={}", e.getClass().getName());
     return problem(
         HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "The request could not be completed.");
   }

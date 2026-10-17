@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Query GitHub's reviewed advisory index for a Maven dependency:list inventory.
+"""Query GitHub's reviewed advisory index for a Maven dependency:list inventory (including test dependencies).
 
 Requires an authenticated gh CLI. Exit 0: no reported advisories, 1: findings,
 2: incomplete scan. Does not assess exploitability or container OS packages.
@@ -18,11 +18,11 @@ parser.add_argument("--output", type=Path, required=True)
 args = parser.parse_args()
 coordinates = []
 for line in args.inventory.read_text().splitlines():
-    match = re.match(r"\s+([^: ]+):([^: ]+):jar:([^: ]+):(compile|runtime)", line)
+    match = re.match(r"\s+([^: ]+):([^: ]+):jar:([^: ]+):(compile|runtime|test|provided)", line)
     if match:
         coordinates.append((match[1] + ":" + match[2], match[3]))
 if not coordinates:
-    sys.exit("No runtime coordinates found; run Maven dependency:list first.")
+    sys.exit("No resolved coordinates found; run Maven dependency:list first.")
 
 
 def scan(item):
@@ -51,5 +51,5 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
 args.output.write_text(json.dumps(results, indent=2) + "\n")
 errors = sum("error" in r for r in results)
 findings = sum(bool(r.get("advisories")) for r in results)
-print(f"Checked {len(results)} runtime coordinates; {findings} affected packages; {errors} query errors.")
+print(f"Checked {len(results)} resolved coordinates; {findings} affected packages; {errors} query errors.")
 sys.exit(2 if errors else 1 if findings else 0)

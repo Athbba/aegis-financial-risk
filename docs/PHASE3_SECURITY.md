@@ -1,5 +1,7 @@
 # Phase 3 dependency and secret checks
 
+**Historical Phase 3 evidence.** Phase 4 resolves these Spring findings with Framework 7.0.9 and expands dependency/image checks. See [the current security review](PHASE4_SECURITY_REVIEW.md). The official 6.2.20 fix is enterprise-only; the prior availability discussion refers to public releases.
+
 Checked 2026-10-17. This records actual checks, not a production-security certification. Phase 4 has not begun. No new application dependencies were added for the risk engine or charts.
 
 ## Dependency evidence

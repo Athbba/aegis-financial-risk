@@ -45,7 +45,7 @@ jobs:
           exit 1
       - name: Desktop and mobile browser journeys
         working-directory: frontend
-        run: npm run test:e2e
+        run: AEGIS_E2E_RESTART_BACKEND=true npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

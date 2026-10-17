@@ -7,6 +7,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+    name = "aegis.seed-data",
+    havingValue = "true",
+    matchIfMissing = true)
 public class SyntheticDataLoader implements ApplicationRunner {
   private static final Logger log = LoggerFactory.getLogger(SyntheticDataLoader.class);
   private final JdbcTemplate jdbc;

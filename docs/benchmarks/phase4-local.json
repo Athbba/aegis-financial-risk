@@ -1,0 +1,75 @@
+{
+  "recordedAt" : "2026-10-17T10:40:26.590637772Z",
+  "jdk" : "21.0.12.1+1-LTS",
+  "processors" : 2,
+  "architecture" : "amd64",
+  "maxHeapBytes" : 2147483648,
+  "cpu" : "model name\t: AMD EPYC 9V74 80-Core Processor",
+  "memory" : "MemTotal:       10207492 kB",
+  "inputs" : "Disposable PostgreSQL 17; 3 synthetic assets / 3129 persisted closes; 300 initial executions plus 110 measured/warmup buys and 110 FIFO sells; 730 calendar days / 521 risk shocks; 8 stress scenarios; 20-row history. In-process MockMvc request, transaction, SQL and JSON time; no network or password verification. Serial execution, 10 warmups per operation.",
+  "results" : [ {
+    "p50Ms" : 6.735273,
+    "p95Ms" : 10.46646,
+    "maxMs" : 26.970176,
+    "minMs" : 5.19488,
+    "operation" : "create portfolio",
+    "warmup" : 10,
+    "samples" : 40
+  }, {
+    "p50Ms" : 11.416873,
+    "p95Ms" : 21.919973,
+    "maxMs" : 33.27631,
+    "minMs" : 7.532911,
+    "operation" : "trade committed buy",
+    "warmup" : 10,
+    "samples" : 100
+  }, {
+    "p50Ms" : 9.881558,
+    "p95Ms" : 25.521201,
+    "maxMs" : 57.561229,
+    "minMs" : 6.977547,
+    "operation" : "trade committed FIFO sell",
+    "warmup" : 10,
+    "samples" : 100
+  }, {
+    "p50Ms" : 6.332248,
+    "p95Ms" : 14.152411,
+    "maxMs" : 22.379093,
+    "minMs" : 4.03554,
+    "operation" : "historical valuation",
+    "warmup" : 10,
+    "samples" : 100
+  }, {
+    "p50Ms" : 11.338154,
+    "p95Ms" : 29.334541,
+    "maxMs" : 45.141381,
+    "minMs" : 8.459623,
+    "operation" : "historical performance 730 days",
+    "warmup" : 10,
+    "samples" : 50
+  }, {
+    "p50Ms" : 15.903279,
+    "p95Ms" : 43.372274,
+    "maxMs" : 71.059878,
+    "minMs" : 11.530322,
+    "operation" : "risk summary 730 days",
+    "warmup" : 10,
+    "samples" : 50
+  }, {
+    "p50Ms" : 5.789964,
+    "p95Ms" : 11.232736,
+    "maxMs" : 24.417478,
+    "minMs" : 3.707988,
+    "operation" : "stress 8 scenarios",
+    "warmup" : 10,
+    "samples" : 100
+  }, {
+    "p50Ms" : 2.580414,
+    "p95Ms" : 4.693497,
+    "maxMs" : 16.075047,
+    "minMs" : 1.960995,
+    "operation" : "history page 20",
+    "warmup" : 10,
+    "samples" : 100
+  } ]
+}

@@ -24,3 +24,14 @@
 ## Phase 3: separate exposure shocks from actual historical drawdown
 
 Reuse Phase 2 immutable historical valuation rather than change trading or accounting. Historical shocks use fixed selected-date rounded exposures; actual drawdown uses the portfolio's changing historical holdings. Strict weekday alignment prevents multi-day gaps becoming daily returns; incomplete weekday windows make estimates unavailable. Cash-only zero risk is analytical, not fabricated history. Historical VaR uses nearest rank, with 100/500 minimums, rather than interpolation or a Gaussian fit. Exposure concentration is disclosed as Σ risky equity weights², not variance attribution. Stress reprices quantities to cents, returns signed contributions and never writes financial records. No schema, cache, external prices or additional infrastructure are needed. See PHASE3_RISK_SPEC.md for formulas/limits and PHASE3_SECURITY.md for dependency checks; a major framework migration is outside this phase.
+
+
+## Phase 4: supported upgrade, durable intent and existing-stack operations
+
+Adopt Boot 4 / Framework 7 only after a disposable prototype passed every original backend test; do not mix unsupported major versions. Compare scanner severity with official application preconditions, preserve historical findings, then resolve them with the available open-source patched framework. Scan test dependencies too; compatible Jackson/Tomcat maintenance fixes keep supported lines aligned.
+
+Use PostgreSQL for expiring authentication attempt windows because it is already transactional and persists across process restarts. Avoid permanent account lockouts and arbitrary forwarded-header trust; disclose shared-client/distributed-abuse limits. Use Actuator/Micrometer, two explicit security chains and safe low-cardinality telemetry instead of introducing a monitoring service.
+
+An ambiguous client request is a recoverable intent, not permission to create a new order. Persist its original key/payload before POST, freeze edits and check the owner-scoped stored result after refresh/login. Keep immutable PostgreSQL executions and portfolio locks as the authority. Record transaction telemetry after completion so rollback and business rejection do not look like committed trades.
+
+Provide an explicit migration-only process and optional least-privilege serving profile without altering existing owner credentials or deleting local state. Exercise real scripts/grants and restore only new disposable databases, with fingerprint comparisons. Digest-pin/harden runtime images; record scan findings rather than equating a scan to security certification. Measure serial requests before optimizing: the observed workloads provide no case for caches, queues or an engine rewrite. No production-readiness claim; Phase 5 remains unstarted.

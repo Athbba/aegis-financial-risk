@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:17-alpine
+    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
     environment:
       POSTGRES_DB: aegis
       POSTGRES_USER: aegis
@@ -15,18 +15,30 @@ services:
       timeout: 3s
       retries: 20
   backend:
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
+    pids_limit: 256
+    stop_grace_period: 30s
     build: ./backend
     environment:
       DATABASE_URL: jdbc:postgresql://db:5432/aegis
       DATABASE_USERNAME: aegis
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in .env}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      AEGIS_OPERATIONS_PASSWORD_HASH: ${AEGIS_OPERATIONS_PASSWORD_HASH:-}
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "127.0.0.1:8080:8080"
   frontend:
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=32m"]
+    pids_limit: 128
     build: ./frontend
     depends_on:
       - backend

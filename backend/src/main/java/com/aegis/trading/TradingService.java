@@ -7,7 +7,6 @@ import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
-import org.slf4j.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,28 +54,45 @@ public class TradingService {
     }
   }
 
-  private static final Logger log = LoggerFactory.getLogger(TradingService.class);
   private final PortfolioRepository portfolios;
   private final OrderRepository orders;
   private final LotRepository lots;
   private final HistoricalPriceProvider prices;
   private final HistoryRepository history;
+  private final com.aegis.operations.TradeTelemetry telemetry;
 
   public TradingService(
       PortfolioRepository portfolios,
       OrderRepository orders,
       LotRepository lots,
       HistoricalPriceProvider prices,
-      HistoryRepository history) {
+      HistoryRepository history,
+      com.aegis.operations.TradeTelemetry telemetry) {
     this.portfolios = portfolios;
     this.orders = orders;
     this.lots = lots;
     this.prices = prices;
     this.history = history;
+    this.telemetry = telemetry;
   }
 
   @Transactional(timeout = 15)
   public Execution execute(UUID user, UUID portfolioId, String key, Request request) {
+    var observation = telemetry.begin(request.side());
+    try {
+      return executeLocked(user, portfolioId, key, request, observation);
+    } catch (DomainException e) {
+      observation.rejected();
+      throw e;
+    }
+  }
+
+  private Execution executeLocked(
+      UUID user,
+      UUID portfolioId,
+      String key,
+      Request request,
+      com.aegis.operations.TradeTelemetry.Observation observation) {
     // Lock first, then look up the key: simultaneous duplicates observe the committed prior
     // execution.
     Portfolio portfolio =
@@ -92,6 +108,7 @@ public class TradingService {
             "IDEMPOTENCY_CONFLICT",
             "This key was already used for a different order.",
             DomainException.Kind.CONFLICT);
+      observation.replay();
       return Execution.of(o);
     }
     if (portfolio.getLastTradeDate() != null
@@ -175,13 +192,6 @@ public class TradingService {
         cash,
         now);
     history.audit(portfolioId, user, "SIMULATED_" + request.side().name(), order.getId(), now);
-    // A transaction rollback also rolls back all accounting rows; this log records a processed
-    // request, not a durable commit receipt.
-    log.info(
-        "Simulated order processed: order_id={}, portfolio_id={}, side={}",
-        order.getId(),
-        portfolioId,
-        request.side());
     return Execution.of(order);
   }
 }

@@ -16,10 +16,15 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
   private final AuthService accounts;
   private final SecurityContextRepository contexts;
+  private final CookieCsrfTokenRepository csrfTokens;
 
-  public AuthController(AuthService accounts, SecurityContextRepository contexts) {
+  public AuthController(
+      AuthService accounts,
+      SecurityContextRepository contexts,
+      CookieCsrfTokenRepository csrfTokens) {
     this.accounts = accounts;
     this.contexts = contexts;
+    this.csrfTokens = csrfTokens;
   }
 
   public record Credentials(
@@ -59,6 +64,6 @@ public class AuthController {
     context.setAuthentication(auth);
     SecurityContextHolder.setContext(context);
     contexts.saveContext(context, req, res);
-    CookieCsrfTokenRepository.withHttpOnlyFalse().saveToken(null, req, res);
+    csrfTokens.saveToken(null, req, res);
   }
 }

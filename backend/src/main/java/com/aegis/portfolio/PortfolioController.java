@@ -83,6 +83,18 @@ public class PortfolioController {
             .map(TradingService.Execution::of));
   }
 
+  @GetMapping("/{id}/orders/by-key/{key}")
+  TradingService.Execution byKey(
+      Authentication user,
+      @PathVariable UUID id,
+      @PathVariable @Pattern(regexp = "[A-Za-z0-9_-]{8,80}") String key) {
+    portfolios.owned(auth.id(user), id);
+    return orders
+        .findByPortfolioIdAndIdempotencyKey(id, key)
+        .map(TradingService.Execution::of)
+        .orElseThrow(com.aegis.shared.DomainException::missing);
+  }
+
   @GetMapping("/{id}/ledger")
   PageResponse<HistoryRepository.Ledger> ledger(
       Authentication user,
