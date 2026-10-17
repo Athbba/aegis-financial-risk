@@ -1,6 +1,6 @@
 # AEGIS
 
-**Financial Risk & Trading Analytics Platform — Phase 2**
+**Financial Risk & Trading Analytics Platform — Phase 3**
 
 AEGIS is an educational investment simulator built with Java 21, Spring Boot 3.5, PostgreSQL and React/TypeScript. The application combines exact decimal settlement and auditable FIFO accounting with dated portfolio valuation, simple performance returns and interactive charts.
 
@@ -8,7 +8,14 @@ AEGIS is an educational investment simulator built with Java 21, Spring Boot 3.5
 
 ## Implemented
 
-Phase 1 trading/accounting behavior is retained. Phase 2 adds:
+Phase 1 trading/accounting and Phase 2 valuation are retained. Phase 3 adds:
+
+- A pure historical risk engine: aligned fixed-exposure returns, sample volatility and √252 annualization, nearest-rank one-day VaR95/VaR99, and actual reconstructed portfolio maximum drawdown.
+- A responsive Risk Lab with backend-driven exposure/distribution charts, explained sample requirements, weekday gaps, keyboard tooltips and explicit unavailable states.
+- Read-only stress simulation: three illustrative presets, common/per-asset sliders, saved session comparisons, exact repricing and asset contributions.
+- Owner-scoped risk APIs, numerical fixtures specified before code, PostgreSQL security/immutability checks and desktop/mobile browser coverage.
+
+Phase 2 provides:
 
 - Historical cash, quantities and FIFO cost reconstructed from immutable executions and sell allocations; future trades never leak into earlier snapshots.
 - Exact-date market value, total equity, realized/unrealized/total P/L, simple return on initial capital and endpoint range performance.
@@ -26,7 +33,7 @@ The foundation includes:
 - Responsive dark dashboard, record filtering/pagination, explicit loading/empty/error states and simulation labels.
 - Flyway migrations, authenticated OpenAPI JSON, health checks, JSON logs, PostgreSQL integration tests and desktop/mobile browser journeys.
 
-**Not implemented:** volatility, drawdown, VaR, correlation, stress testing, benchmarks, annualized/TWR/MWR returns, external market data, FX or public production deployment. Phase 3 risk analysis has not begun. See [PROGRESS.md](PROGRESS.md).
+**Not implemented:** correlation matrices, variance attribution, benchmarks, annualized investment returns/TWR/MWR, external market data, FX or public production deployment. Annualized **volatility** is implemented. See [PROGRESS.md](PROGRESS.md).
 
 ## Run locally
 
@@ -93,9 +100,24 @@ BUILDX_CONFIG=/workspace/.cache/buildx docker compose -f compose.yml -f compose.
 
 Stop local Java/Vite processes first if they occupy ports 8080/5173. This path preserves TLS verification for dependency downloads and avoids downloading dependencies inside image builds. Rebuild artifacts before repackaging after code changes. Standard local source-image builds remain available in compose.yml; their success in this restricted environment is not claimed.
 
+### Reproduce Phase 3 risk calculations
+
+1. Create a USD 10,000 portfolio. Buy 10 ALTA and 5 BRIM on 2024-01-02 using the execution desk.
+2. Select **Risk Lab** and date **2025-12-31**, with **2 years · 730 days**. Click **Analyze risk**. The actual window is 2024-01-02–2025-12-31: 522 weekday closes / 521 aligned daily shocks. Inspect volatility, VaR95/VaR99 and the dated observation table.
+3. Each shock holds the selected date’s marked exposures fixed, including cash with zero price movement. VaR sorts hypothetical USD losses and selects the nearest-rank percentile. This is not the portfolio’s realized historical strategy performance. Maximum drawdown instead uses the actual Phase 2 equity series with historical trades.
+4. Set common shock to −10%, check **Override BRIM**, set BRIM to +20%, then save a named comparison. Inspect every effective shock and asset contribution. **Reset to zero** must leave equity unchanged. Presets are illustrative: broad −10%, severe −25%, relief +10%; cash is unchanged in all cases. No trades or ledger records are written.
+5. Select 30 calendar days: VaR95/VaR99 are unavailable because their minimums are 100/500 daily observations. Select 2024-01-06: current risky holdings cannot be priced on that weekend, so current risk/stress are unavailable. Select 2024-01-01: future trades are excluded and the portfolio is cash-only with analytically zero market-price risk.
+6. Missing weekdays invalidate affected estimates; prices are never filled or skipped silently. VaR is not maximum possible loss. Even 500 observations leave only about five observations in the 1% tail. Expand **Methodology & model limits** for conventions.
+
+Formulas, decimal precision, limits and hand-calculated fixtures: [Phase 3 methodology](docs/PHASE3_RISK_SPEC.md). API examples: [API.md](API.md). Five new interview questions: [MENTORING.md](docs/MENTORING.md).
+
 ## Screenshots
 
 Captured from the running application using only the fixed-seed synthetic dataset and automated browser-created simulated trades:
+
+![Phase 3 Risk Lab](docs/images/phase3-desktop.png)
+
+[Phase 3 mobile Risk Lab](docs/images/phase3-mobile.png)
 
 ![Phase 2 portfolio valuation and performance](docs/images/phase2-desktop.png)
 
@@ -126,11 +148,13 @@ The backend test suite requires Docker and starts an isolated PostgreSQL databas
 | [Data model](DATA_MODEL.md) | Tables, relations, constraints and query-driven indexes |
 | [API](API.md) | Session/CSRF flow, endpoint contracts and retry semantics |
 | [Financial assumptions](FINANCIAL_ASSUMPTIONS.md) | Rounding, FIFO formulas, synthetic data, missing prices, omissions |
+| [Phase 3 risk specification](docs/PHASE3_RISK_SPEC.md) | Formulas, thresholds, gaps, precision and fixtures established before implementation |
+| [Security scan evidence](docs/PHASE3_SECURITY.md) | Actual dependency/secret scan scope, fixes and remaining findings |
 | [Decisions](DECISIONS.md) | Important choices and alternatives |
 | [Testing](TESTING.md) | Commands, evidence and scope |
 | [Progress](PROGRESS.md) | Delivered and unfinished functionality |
 | [Cloud environment rebuild](docs/CLOUD_ENVIRONMENT.md) | Saved Codex installation/startup instructions and state boundaries |
 | [Phase plan](docs/PLAN.md) | Explicit acceptance criteria for Phases 0–5 |
-| [Mentoring notes](docs/MENTORING.md) | Phase explanations and fifteen interview questions with sample answers |
+| [Mentoring notes](docs/MENTORING.md) | Phase explanations and twenty interview questions with sample answers |
 
-The repository stops at Phase 2. Phase 3 risk analytics require separate mathematical specifications and numerical tests and have not begun.
+The repository stops after Phase 3. Phases 4–5 have not begun. The current Java advisory scan has two remaining Spring MVC advisories; see [scan scope and limitations](docs/PHASE3_SECURITY.md). This is not a production-readiness claim.

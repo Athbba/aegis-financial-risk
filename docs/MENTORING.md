@@ -56,7 +56,7 @@
 
 **Demonstrated journey:** fund 1,000, buy 10 ALTA at the Jan 2, 2024 synthetic close, sell 4 at Jan 3 close and view Jan 1–8. The actual fixed-seed dataset yields 997.52 equity (−2.48 total P/L), which differs deliberately from the isolated hand-verifiable 1032 fixture. Selecting Jan 1 excludes future orders; Jan 6 shows missing quotes instead of invented zero/forward-filled values. The browser test compares all displayed financial results to backend responses and exercises chart hover, keyboard, data table and retry behavior.
 
-**Incomplete:** Phase 3 volatility, drawdown, VaR, correlation and stress testing; benchmarks/annualization; multi-flow or time-/money-weighted returns; licensed external data; public deployment and broad security/accessibility/load validation. The simple return policy must change before additional external cash flows are introduced. Operational hardening from later phases remains open. No automatic PR merge is authorized.
+**Incomplete at Phase 2 delivery (risk added in Phase 3 below):** correlation matrices and variance attribution; benchmarks/investment-return annualization; multi-flow or time-/money-weighted returns; licensed external data; public deployment and broad security/accessibility/load validation. The simple return policy must change before additional external cash flows are introduced. Operational hardening from later phases remains open. No automatic PR merge is authorized.
 
 **Learn:** immutable accounting reconstruction versus mutable current state; effective dates versus recording clocks; BigDecimal rounding/reconciliation; SQL range/index patterns and repeatable-read isolation; missing-data semantics; denominators in financial returns; chart accessibility and request cancellation; additive migrations and data-preserving upgrades.
 
@@ -67,3 +67,24 @@
 3. **What is the difference between your two return percentages?** Since-start return is `(equity − initial capital) / initial capital × 100`. Range return is `(ending EOD equity − starting EOD equity) / starting EOD equity × 100`. In the fixture, 1050 to 1032 is −1.7143% for that period, while 1032 against 1000 opening capital is +3.20%. Neither calculation is TWR/MWR, and a zero range denominator is undefined.
 4. **How do missing prices affect the dashboard?** Keep known cash/realized P/L/quantity/cost, but make affected market/equity/unrealized/total P/L/return fields null and name the unpriced symbols. Don't total only priced positions as though complete. Preserve missing dates and break the chart line. Closed positions need no price; cash-only weekends are valid.
 5. **How do you keep historical analytics reliable without microservices or a cache?** Use one owner-scoped REPEATABLE READ transaction, capped execution/date/asset inputs, indexed immutable-cost sums and a bulk price read. Advance accounting balances once through dates and reconcile P/L. No per-point queries or cache invalidation are needed at this size. Numerical, PostgreSQL, migration, preservation and browser tests validate different failure modes.
+
+
+## Phase 3 — explainable historical risk
+
+Volatility measures how spread out the daily hypothetical returns are: subtract their average, square the differences, sum, divide by n−1 and take the square root. Annual volatility multiplies that daily number by √252. It is a convention for expressing historical dispersion, not a guaranteed forecast.
+
+Historical VaR asks what losses the selected holdings would have had under old daily asset moves. Cash stays fixed. Sort those losses and choose the documented percentile. A 99% VaR can be exceeded; unseen shocks and a small tail sample make any guarantee inappropriate. Actual historical drawdown asks a different question: how far did the simulated portfolio's reconstructed equity fall from a previous high, while its trades and holdings changed through time?
+
+Missing prices matter because removing a bad day or treating it as zero can suppress measured risk. AEGIS requires adjacent weekdays for every held asset and makes estimates unavailable on gaps. Stress testing instead applies a user's explicitly chosen percentage price change to current quantities, keeps cash unchanged, and shows the contributions without executing trades.
+
+### Five Phase 3 interview questions
+
+16. **Why use sample standard deviation and √252?** Sample deviation divides squared deviations by n−1 because the sample mean was estimated from those observations. √252 expresses daily dispersion on an annual scale under a conventional variance-scaling assumption; it is not a claim of independent real returns or guaranteed future volatility. AEGIS requires 30 aligned observations.
+
+17. **How exactly does nearest-rank historical VaR work?** Reconstruct selected-date marked exposures, apply each aligned historical daily shock, negate decimal P/L to get loss, sort ascending and select one-based ceil(confidence×n). For losses 1…500, VaR95 selects 475 and VaR99 selects 495. AEGIS floors negative loss quantiles at zero and requires 100/500 observations. USD and equity percentage are reported separately.
+
+18. **Why is VaR not a maximum loss, and how is it different from maximum drawdown?** A quantile leaves a tail beyond the selected loss and includes no unseen scenarios. Even 500 observations give about five in the 1% tail. AEGIS VaR holds selected-date exposures fixed; drawdown follows actual simulated equity including historical trades, retaining the running peak and worst subsequent decline. Neither predicts a future ceiling.
+
+19. **What goes wrong if you align prices by dropping every missing row?** You can silently bridge a missing weekday, turning a two-day move into a one-day observation, or remove stress days from the sample. AEGIS enumerates expected weekdays, checks both endpoints for all held assets and reports gaps. Friday-to-Monday is consecutive; Monday-to-Wednesday with missing Tuesday is not. Any required historical gap makes the sample estimates unavailable.
+
+20. **How would you prove stress simulation is correct and cannot place trades?** Keep the engine pure: quantity×price×(1+shock/100), cents HALF_EVEN per aggregate position, cash unchanged, contributions sum to total. With cash500, A3×100, B10×20, shocks A−10%/B+20% give equity1010 and gain10/+1%. Zero shock preserves equity. The application service uses read-only transactions and no mutation calls; PostgreSQL tests compare complete orders, lots, allocations, portfolio, ledger and audit rows before/after accepted and rejected requests, and security tests cover ownership/CSRF.

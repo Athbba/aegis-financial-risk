@@ -6,6 +6,7 @@ import { usd, qty, message } from "./format";
 import { TradeTicket } from "./TradeTicket";
 import { History } from "./History";
 import { AnalyticsPanel } from "./AnalyticsPanel";
+import { RiskLab } from "./RiskLab";
 
 export function Dashboard({
   user,
@@ -14,6 +15,7 @@ export function Dashboard({
   user: User;
   signedOut: () => void;
 }) {
+  const [view, setView] = useState<"performance" | "risk">("performance");
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [portfolioPage, setPortfolioPage] = useState(0);
   const [portfolioTotal, setPortfolioTotal] = useState(0);
@@ -99,16 +101,27 @@ export function Dashboard({
       <aside className="sidebar">
         <Brand />
         <p className="nav-caption">WORKSPACE</p>
-        <a className="nav-item active" href="#main">
+        <a
+          className={`nav-item ${view === "performance" ? "active" : ""}`}
+          href="#main"
+          onClick={() => setView("performance")}
+        >
           <span aria-hidden="true">▦</span> Portfolio desk{" "}
-          <span className="nav-dot" />
+          {view === "performance" && <span className="nav-dot" />}
+        </a>
+        <a
+          className={`nav-item ${view === "risk" ? "active" : ""}`}
+          href="#risk-lab"
+          onClick={() => setView("risk")}
+        >
+          <span aria-hidden="true">◈</span> Risk Lab
         </a>
         <div className="roadmap-note">
           <span className="eyebrow">BUILT ON TRANSPARENCY</span>
           <p>Every decision has a record.</p>
           <small>
-            Valuation and performance, grounded in the record. Risk analysis is
-            reserved for Phase 3.
+            Historical risk, transparent assumptions and hypothetical scenarios,
+            grounded in the record.
           </small>
         </div>
         <div className="sidebar-bottom">
@@ -250,6 +263,8 @@ export function Dashboard({
                   key={selected}
                   detail={detail}
                   revision={revision}
+                  view={view}
+                  setView={setView}
                   changed={() => {
                     if (active.current === selected) setRevision((r) => r + 1);
                   }}
@@ -262,7 +277,7 @@ export function Dashboard({
             <span>
               Educational investment simulation · No brokerage connectivity
             </span>
-            <span>PHASE 02</span>
+            <span>PHASE 03</span>
           </footer>
         </main>
       </div>
@@ -273,16 +288,35 @@ export function Dashboard({
 function PortfolioDesk({
   detail,
   revision,
+  view,
+  setView,
   changed,
 }: {
   detail: Detail;
   revision: number;
+  view: "performance" | "risk";
+  setView: (view: "performance" | "risk") => void;
   changed: () => void;
 }) {
   const { portfolio, holdings } = detail;
   return (
     <>
-      <AnalyticsPanel portfolio={portfolio} revision={revision} />
+      <div className="analytics-tabs" role="group" aria-label="Analytics view">
+        <button
+          aria-pressed={view === "performance"}
+          onClick={() => setView("performance")}
+        >
+          Valuation & performance
+        </button>
+        <button aria-pressed={view === "risk"} onClick={() => setView("risk")}>
+          Risk Lab
+        </button>
+      </div>
+      {view === "performance" ? (
+        <AnalyticsPanel portfolio={portfolio} revision={revision} />
+      ) : (
+        <RiskLab portfolio={portfolio} revision={revision} />
+      )}
       <div className="execution-heading">
         <h2>Simulated execution desk</h2>
         <p>

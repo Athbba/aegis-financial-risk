@@ -1,4 +1,4 @@
-# Financial assumptions — Phases 1 and 2
+# Financial assumptions — Phases 1–3
 
 AEGIS is educational simulation software, not a brokerage or investment adviser. Default assets/prices are deterministic fiction. No real exchange execution, bank or brokerage integration exists. These calculations are not institution-grade forecasts.
 
@@ -59,7 +59,7 @@ For user-selected inclusive endpoints a and b:
 
 `period_return_percent = 100 × period_change / total_value(a)`
 
-Both endpoints are end-of-day. The range return excludes changes before/within the first day's closing baseline; since-start return always compares against opening initial capital. A single-date complete range has zero endpoint change but insufficient observations for a trend chart. A zero starting value makes range percentage null with ZERO_START_VALUE; absolute change remains available. No annualization, benchmark, time weighting or money weighting is implemented or claimed. If cash flows are added later, this return convention must be revisited before use.
+Both endpoints are end-of-day. The range return excludes changes before/within the first day's closing baseline; since-start return always compares against opening initial capital. A single-date complete range has zero endpoint change but insufficient observations for a trend chart. A zero starting value makes range percentage null with ZERO_START_VALUE; absolute change remains available. No investment-return annualization, benchmark, time weighting or money weighting is implemented or claimed; Phase 3 annualizes volatility only. If cash flows are added later, this return convention must be revisited before use.
 
 Individual positions expose realized, unrealized and total P/L. `unrealizedReturnPercent` divides unrealized P/L by the **remaining** cost basis, not cumulative portfolio funding. It is not a lifecycle/annualized asset return.
 
@@ -94,4 +94,19 @@ Default ALTA/BRIM/COVE data: version `synthetic-v1-seed-73129`, seeds 73129–73
 
 Analytics is bounded to 1,461 inclusive calendar days, 10,000 executions through the end date, and 100 distinct traded assets. Limits are rejected, not silently truncated. Bulk queries plus one chronological accounting pass avoid a database query per chart point. No valuation cache or precomputed snapshots are used, avoiding stale results after trades.
 
-Dividends, splits, corporate actions, interest, taxes, fees, spreads, slippage, liquidity, settlement delays, leverage, shorts, limit/open orders, FX and external market providers remain absent. All accepted simulated orders fill immediately at the documented close. Phase 3 volatility, drawdown, VaR, correlation and stress tests are not implemented. No institution-grade risk forecasts are claimed. The existing HistoricalPriceProvider remains the seam for later licensed data with documented provenance/caching/failure rules; no paid API is required now.
+Dividends, splits, corporate actions, interest, taxes, fees, spreads, slippage, liquidity, settlement delays, leverage, shorts, limit/open orders, FX and external market providers remain absent. All accepted simulated orders fill immediately at the documented close. Phase 3 volatility, historical VaR, drawdown and stress simulation are specified below; correlation matrices and variance attribution remain absent. No institution-grade risk forecasts are claimed. The existing HistoricalPriceProvider remains the seam for later licensed data with documented provenance/caching/failure rules; no paid API is required now.
+
+
+## Phase 3 risk and stress assumptions
+
+The authoritative pre-implementation formulas and fixtures are in [PHASE3_RISK_SPEC.md](docs/PHASE3_RISK_SPEC.md). Risk uses exact persisted closes no later than the selected valuation date, weekdays only. A lookback is 2–1461 inclusive calendar days, clipped at simulation start. Returns require the immediately preceding weekday and current weekday for **every held asset**. Friday-to-Monday is valid; a missing Tuesday cannot be bridged by Monday-to-Wednesday. Any required weekday gap invalidates sample estimates, with missing pairs and symbol/dates returned explicitly.
+
+For fixed marked exposures E_i and total equity V (cash included), portfolio shock return is Σ(E_i/V × asset return_i). Cash contributes zero. Exposures are cents from Phase 2; return divisions keep 18 decimals HALF_EVEN. Sample deviation uses n−1 and at least 30 aligned observations; annual volatility = daily × √252. Only statistical mean/squared deviations/square root use binary floating point; reported percentage volatility has eight decimal places. Accounting and shock losses remain decimal. This dispersion is a risk measure, not a forecast.
+
+One-day VaR sorts hypothetical decimal losses ascending and selects one-based rank ceil(c×n), floored at zero. VaR95 requires 100 observations; VaR99 requires 500. USD is rounded to cents and percentage is computed from the unrounded selected loss / total equity. VaR is not maximum loss: larger or unseen losses remain possible, and the tail estimate is uncertain even at minimum sample sizes. Exposure concentration = sum of squared risky-asset weights in total equity, cash excluded from the sum. It is neither variance attribution nor a risk score.
+
+Maximum drawdown uses the **actual reconstructed equity history**, with each day's historical trades. It reports the largest running-peak-to-later-trough percentage decline and dates. All weekdays in the requested window must be complete; any incomplete weekday makes the entire drawdown unavailable. Weekends are excluded, and two observations are required. Earliest peak/trough win ties. For flat/rising history, decline is zero and both dates are the first eligible day. It describes observed simulated history, whereas VaR examines selected-date exposures.
+
+Positive-equity cash-only portfolios have analytically zero price volatility/VaR without invented observations. Zero equity makes risk percentages unavailable. An unpriced current holding makes current-exposure aggregates and stress unavailable. Every unavailable metric has null values and an explicit reason, rather than a fabricated zero.
+
+Stress leaves quantities/cash fixed and multiplies each selected close by (1 + effective shock/100). Each aggregate position is rounded HALF_EVEN to cents after repricing; individual contributions sum to the total signed change. This may differ by cents from historical risk's unrounded exposure-times-return P/L; the two conventions are deliberate and disclosed. Shocks range −100% to +100%, with at most four decimals, and cannot produce negative prices. Presets are illustrative broad selloff −10%, severe selloff −25%, relief rally +10% for every risky asset. Custom overrides replace the common shock for named held assets. No execution, funding, lot, ledger or audit history is changed.
