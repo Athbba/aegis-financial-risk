@@ -1,0 +1,165 @@
+{
+  "scope": "LOCAL_REHEARSAL_ONLY",
+  "reviewDate": "2026-10-18 Asia/Riyadh",
+  "runtimeSourceCommit": "3d053253c6f5b0eebe5ae27b1196af147353cf6e",
+  "backend": {
+    "tests": 91,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "browser": {
+    "tests": 12,
+    "failures": 0,
+    "scope": "Reduced runtime HTTPS; desktop Chromium/Pixel 7 emulation; original 10 retained"
+  },
+  "negativeGateTests": 4,
+  "javaCoordinates": 158,
+  "javaAdvisories": 0,
+  "npmVulnerabilities": 0,
+  "controls": {
+    "status": "PASS",
+    "scope": "LOCAL_COMPLETE_PROXY_CHAIN",
+    "containers": {
+      "backend": {
+        "uid": 100,
+        "capDrop": [
+          "ALL"
+        ],
+        "readOnlyRootfs": true,
+        "memoryBytes": 805306368,
+        "pidsLimit": 256,
+        "databaseWritableDataExpected": false,
+        "imageId": "sha256:a7ed91780c6aaa76b618c2a41564c4f81de58500f1df8f85efdb8c82b9e9d317"
+      },
+      "frontend": {
+        "uid": 101,
+        "capDrop": [
+          "ALL"
+        ],
+        "readOnlyRootfs": true,
+        "memoryBytes": 134217728,
+        "pidsLimit": 128,
+        "databaseWritableDataExpected": false,
+        "imageId": "sha256:30803625c2644b85b2063accf4739058f916b70be030ce35d04a5aeb6d033270"
+      },
+      "db": {
+        "uid": 70,
+        "capDrop": [
+          "ALL"
+        ],
+        "readOnlyRootfs": false,
+        "memoryBytes": 536870912,
+        "pidsLimit": 256,
+        "databaseWritableDataExpected": true,
+        "imageId": "sha256:915c1c7012b413527f91adefc88c725218706f38bd8e38591e03a86219b7a8da"
+      }
+    },
+    "abusiveClientRequests": 32,
+    "unauthorized": 30,
+    "throttled": 2,
+    "spoofingDidNotEvade": true,
+    "distinctClientCanAuthenticate": true,
+    "budgetSurvivedRestart": true,
+    "databaseOutageReadinessDown": true,
+    "databaseOutageLivenessUp": true,
+    "expiry": "persistent-window controlled-clock PostgreSQL tests (no wall-clock shortening in deployment)"
+  },
+  "load": {
+    "scope": "LOCAL_REHEARSAL",
+    "clients": 4,
+    "requests": 80,
+    "errors": 0,
+    "errorRatio": 0.0,
+    "p95Ms": 219.7652869999729,
+    "thresholds": {
+      "errorRatioBelow": 0.01,
+      "p95MsBelow": 1000
+    },
+    "tradingAndReconciliation": "PASS",
+    "secureCookies": "PASS",
+    "status": "PASS"
+  },
+  "recovery": {
+    "status": "PASS",
+    "scope": "LOCAL_ENCRYPTED_ROUND_TRIP",
+    "sourceUnchanged": true,
+    "financialTableFingerprints": 9,
+    "restoredReconciliation": "PASS (cash, FIFO lots, ledger/audit references SQL)",
+    "refusesExistingDatabase": true,
+    "ciphertextIntegrityFailureDetected": true,
+    "encryptedBytes": 43414,
+    "rpoTargetHours": 24,
+    "localBackupAgeSeconds": 4.755,
+    "rtoTargetSeconds": 1800,
+    "measuredRestoreSeconds": 2.835,
+    "totalDrillSeconds": 4.755,
+    "remoteStorageVerified": false,
+    "targetHostVerified": false
+  },
+  "upgrade": {
+    "status": "PASS",
+    "scope": "LOCAL_REHEARSAL",
+    "baselineImageId": "sha256:8708ab78133956525b7066f72a9d5236a30d6f93d81ff01b0aaffc6d3f39989c",
+    "candidateImageId": "sha256:a7ed91780c6aaa76b618c2a41564c4f81de58500f1df8f85efdb8c82b9e9d317",
+    "upgrade": "PASS",
+    "rollback": "PASS",
+    "returnToCandidate": "PASS",
+    "oneCommittedOrderRetained": true,
+    "sameKeyRecoveryAfterReauthentication": true,
+    "databaseDownMigration": false,
+    "schemaVersion": "3 unchanged",
+    "note": "Baseline Phase 4 Java artifact repackaged on the supported Alpine runtime; no live environment touched."
+  },
+  "rollback": {
+    "status": "PASS",
+    "imageId": "sha256:8708ab78133956525b7066f72a9d5236a30d6f93d81ff01b0aaffc6d3f39989c",
+    "sourceCommit": "b3151f55bf63709808b6279eb3970972db3162aa",
+    "platform": "linux/amd64",
+    "counts": {
+      "MEDIUM": 1
+    },
+    "sha256": {
+      "scan.json": "36d2b96ab7a4acb311980e94f40191e51686bc289ce6d5134d799c0cef76ecad",
+      "sbom.json": "5e541008c55569efa12cbad52dc11de9fd453054521e0f4ffbfd1b1cbec5e13e",
+      "oci.tar": "214262f542f8929c09b0401df3d465a71b00f9745b5052779a7a5faea2e9426c"
+    },
+    "scanner": {
+      "Version": "0.76.0",
+      "VulnerabilityDB": {
+        "Version": 2,
+        "NextUpdate": "2026-10-18T18:34:28.174846475Z",
+        "UpdatedAt": "2026-10-17T18:34:28.174846796Z",
+        "DownloadedAt": "2026-10-17T21:22:43.379513151Z"
+      },
+      "JavaDB": {
+        "Version": 1,
+        "NextUpdate": "2026-10-20T01:07:50.102177379Z",
+        "UpdatedAt": "2026-10-17T01:07:50.102177499Z",
+        "DownloadedAt": "2026-10-17T10:43:42.656237757Z"
+      }
+    }
+  },
+  "environment": {
+    "platform": "Linux/x86_64",
+    "cpuAffinityCount": 3,
+    "java": "Temurin 21.0.12.1",
+    "apiMemoryLimitMiB": 768,
+    "databaseMemoryLimitMiB": 512,
+    "scope": "Shared managed cloud Docker host; uncontrolled tenancy; TLS Nginx plus real PostgreSQL and production React/API; bounded smoke, not capacity certification"
+  },
+  "enrollment": {
+    "closedEnrollment": "PASS",
+    "registrationStatus": 403
+  },
+  "proxy-security": {
+    "status": "PASS",
+    "trustedTls": true,
+    "httpRedirectStatus": 308,
+    "secureHeaders": true,
+    "metricsDeniedAtEdge": true
+  },
+  "configuration-closed": {
+    "deploymentConfiguration": "PASS"
+  }
+}

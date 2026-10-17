@@ -23,7 +23,8 @@ public class DeploymentGuard {
     for (String key : new String[] {"spring.flyway.enabled", "aegis.seed-data"})
       if (!"false".equals(env.getProperty(key)))
         throw new IllegalStateException("Unsafe deployment setting: " + key);
-    if (!env.getProperty("server.servlet.session.cookie.secure", "false").equals("true")
+    if (!env.getProperty("server.forward-headers-strategy", "none").equalsIgnoreCase("none")
+        || !env.getProperty("server.servlet.session.cookie.secure", "false").equals("true")
         || !env.getProperty("aegis.trusted-proxy", "").matches("(?:[0-9]{1,3}\\.){3}[0-9]{1,3}")
         || !java.util.Set.of("closed", "open").contains(env.getProperty("aegis.enrollment", "")))
       throw new IllegalStateException(

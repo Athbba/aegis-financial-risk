@@ -133,6 +133,12 @@ class DatabaseSafetyTest {
     for (String sql :
         List.of(
             "delete from cash_ledger",
+            "delete from executed_order",
+            "delete from sell_allocation",
+            "delete from audit_event",
+            "update cash_ledger set amount=amount",
+            "update audit_event set event_type=event_type",
+            "delete from historical_price",
             "update executed_order set quantity=quantity",
             "update sell_allocation set cost=cost",
             "update historical_price set close_price=close_price",
@@ -218,6 +224,10 @@ class DatabaseSafetyTest {
               "revoke update(name) on portfolio from PUBLIC"
             },
             new String[] {
+              "grant p5_parent to aegis_runtime_bad with inherit true, set false",
+              "revoke p5_parent from aegis_runtime_bad"
+            },
+            new String[] {
               "grant p5_parent to aegis_runtime_bad with inherit false, set true",
               "revoke p5_parent from aegis_runtime_bad"
             },
@@ -275,6 +285,7 @@ class DatabaseSafetyTest {
     new DeploymentGuard(env, runtime).verify();
     for (String[] setting :
         List.of(
+            new String[] {"server.forward-headers-strategy", "framework"},
             new String[] {"spring.flyway.enabled", "true"},
             new String[] {"aegis.seed-data", "true"},
             new String[] {"server.servlet.session.cookie.secure", "false"},

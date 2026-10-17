@@ -1,3 +1,9 @@
 target/*
 !target/aegis-0.1.0.jar
 *.log
+.env
+.env.*
+.local
+*.dump
+*.key
+*.pem

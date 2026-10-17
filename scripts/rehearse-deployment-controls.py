@@ -4,8 +4,8 @@ import argparse,json,pathlib,subprocess,time
 p=argparse.ArgumentParser();p.add_argument('--env-file',required=True);p.add_argument('--ca',required=True);p.add_argument('--output',required=True);a=p.parse_args()
 repo=pathlib.Path(__file__).resolve().parents[1];compose=['docker','compose','--env-file',str(pathlib.Path(a.env_file).resolve()),'-f',str(repo/'compose.deployment.yml')]
 resolved=json.loads(subprocess.check_output(compose+['config','--format','json'],text=True));project=resolved['name'];assert project.startswith('aegis-p5-')
-def command(args,check=True):return subprocess.run(args,check=check,text=True,capture_output=True)
-def health(kind):return command(compose+['exec','-T','backend','wget','-Y','off','-qO-','http://127.0.0.1:8080/actuator/health/'+kind],False)
+def command(args,check=True):return subprocess.run(args,check=check,text=True,capture_output=True,timeout=120)
+def health(kind):return command(compose+['exec','-T','backend','wget','-T','10','-Y','off','-qO-','http://127.0.0.1:8080/actuator/health/'+kind],False)
 def ready():
  for _ in range(60):
   if health('readiness').returncode==0:return
@@ -15,9 +15,10 @@ ready();state={}
 for service in ['backend','frontend','db']:
  cid=command(compose+['ps','-q',service]).stdout.strip();d=json.loads(command(['docker','inspect',cid]).stdout)[0];host=d['HostConfig']
  uid=command(compose+['exec','-T',service,'id','-u']).stdout.strip();assert uid!='0'
+ assert d['Image']==resolved['services'][service]['image']
  assert host['CapDrop']==['ALL'] and 'no-new-privileges:true' in host['SecurityOpt'] and host['Memory']>0 and host['PidsLimit']>0
  assert host['ReadonlyRootfs']==(service!='db')
- state[service]={'uid':int(uid),'capDrop':host['CapDrop'],'readOnlyRootfs':host['ReadonlyRootfs'],'memoryBytes':host['Memory'],'pidsLimit':host['PidsLimit'],'databaseWritableDataExpected':service=='db'}
+ state[service]={'imageId':d['Image'],'uid':int(uid),'capDrop':host['CapDrop'],'readOnlyRootfs':host['ReadonlyRootfs'],'memoryBytes':host['Memory'],'pidsLimit':host['PidsLimit'],'databaseWritableDataExpected':service=='db'}
 clients=[];helper='python:3.12-alpine@sha256:1b668429b3511ab407d8e00648891631b0b1a4d7e15e3ca70f38ab5b91ad4ab4'
 try:
  for name in ['client-a','client-b']:

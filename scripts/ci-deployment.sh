@@ -56,3 +56,5 @@ sleep 1
 python3 scripts/verify-closed-enrollment.py "$private/ca-cert" > "$evidence/enrollment.json"
 docker compose config --format json | python3 scripts/validate-deployment.py > "$evidence/configuration-closed.json"
 scripts/scan-release-images.sh "$evidence" aegis-p5-api:rehearsal aegis-p5-ui:rehearsal aegis-p5-db:rehearsal
+
+scripts/scan-rollback-image.sh "$evidence" aegis-p5-api:baseline b3151f55bf63709808b6279eb3970972db3162aa

@@ -69,6 +69,7 @@ services:
       SPRING_FLYWAY_ENABLED: "false"
       AEGIS_SEED_DATA: "false"
       COOKIE_SECURE: "true"
+      SERVER_FORWARD_HEADERS_STRATEGY: none
       AEGIS_TRUSTED_PROXY: ${DEPLOY_PROXY_IP:-172.29.51.10}
       AEGIS_ENROLLMENT: ${DEMO_ENROLLMENT:-closed}
     secrets:

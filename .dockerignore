@@ -1,0 +1,4 @@
+# Database image needs only its Dockerfile. Never send credentials/dumps/dependency caches.
+**
+!deploy/
+!deploy/database.Dockerfile

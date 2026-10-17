@@ -1,6 +1,6 @@
 # Progress
 
-Status: **Phase 5 deployment preparation in progress; public release BLOCKED pending target host/domain/off-host storage/operator verification. No merge or launch.**
+Status: **Phase 5 local deployment preparation implemented; public release BLOCKED pending target host/domain/off-host storage/operator verification. No merge or launch.**
 
 Phase 1 was merged by PR #1; Phase 2 was merged by PR #2 (`37dda5c`). Phase 3 started from updated main on `feature/aegis-phase-3`. Its methodology was committed before code (`6f02681`). PR #3 was subsequently merged as `7870135`; its main CI passed before Phase 4 began. No automatic merge is authorized.
 

@@ -2,3 +2,9 @@ node_modules
 playwright-report
 test-results
 *.tsbuildinfo
+.env
+.env.*
+.local
+*.dump
+*.key
+*.pem
