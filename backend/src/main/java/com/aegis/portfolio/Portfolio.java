@@ -1,5 +1,6 @@
 package com.aegis.portfolio;
 
+import com.aegis.shared.SimulationCalendar;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.*;
@@ -27,6 +28,13 @@ public class Portfolio {
 
   @Column(name = "created_at")
   private Instant createdAt;
+
+  @Column(name = "simulation_start_date", nullable = false, updatable = false)
+  private LocalDate simulationStartDate = SimulationCalendar.START;
+
+  public LocalDate getSimulationStartDate() {
+    return simulationStartDate;
+  }
 
   protected Portfolio() {}
 

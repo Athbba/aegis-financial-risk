@@ -1,6 +1,6 @@
 # Architecture
 
-AEGIS is an educational investment simulator, delivered as a modular Java application and a React client. Phase 1 deliberately concentrates on accounting and traceability before analytics.
+AEGIS is an educational investment simulator, delivered as a modular Java application and a React client. Phase 1 established accounting and traceability; Phase 2 adds historical valuation and simple performance without introducing a risk engine.
 
 ```mermaid
 flowchart LR
@@ -22,6 +22,7 @@ flowchart LR
 | `auth` | BCrypt credentials, session establishment, CSRF/security policy, current user lookup |
 | `portfolio` | Ownership, funding, consistent holdings/cash snapshot, append-only ledger/audit persistence |
 | `market` | Synthetic data generation/loading, exact-date quote access, historical-price interface |
+| `analytics` | Pure historical valuation, bounded execution/price reads, owner-scoped valuation/performance APIs |
 | `trading` | Transaction orchestration, idempotency, chronological orders, FIFO position lots; pure `FinancialMath` |
 | `shared` | Protocol-independent business failures |
 | `web` | Common errors, pagination, exact decimal JSON serialization, OpenAPI configuration |
@@ -52,3 +53,19 @@ This is a local development baseline, not a production deployment. Sessions live
 ## Why these choices
 
 A single transaction boundary is the simplest way to preserve accounting consistency. Fixed-scale decimal persistence and pure FIFO functions make results explainable and testable. Historical simulation has an explicit clock separate from the actual recording clock. Keeping performance/risk out of Phase 1 avoids presenting calculations before their assumptions and tests exist. See [DECISIONS.md](DECISIONS.md) and [the phase plan](docs/PLAN.md).
+
+## Phase 2 historical read model
+
+`AnalyticsController` validates HTTP date shapes and resolves the user. `AnalyticsService` verifies ownership before date/domain checks and runs each response in a **read-only REPEATABLE READ transaction** with a 15-second timeout. The combined `/performance` response includes ending summary, endpoint change/return, series and allocation in one consistent snapshot; separate endpoint requests can naturally observe different later committed trades.
+
+`AnalyticsRepository` reads one initial funding row, at most 10,001 dated executions (the extra row detects the 10,000 cap), and one bulk exact-date price set. Sell costs are indexed sums of immutable sell allocations, checked against stored realized P/L. Asset/date uniqueness and limits of 100 symbols × 1,461 days bound price results to at most 146,100 rows. V2 adds `(portfolio_id, price_date, recorded_at, id)` and `sell_allocation(sell_order_id)` indexes for these actual query patterns. There is no query per chart point or per displayed asset.
+
+`ValuationEngine` is independent of Spring, HTTP and persistence. It sorts immutable accounting events by effective date, advances cash/quantity/cost/realized balances once through history, and marks each date's positions using exact closes. Complexity is O(orders log orders + days × assets), bounded before computation. Daily DTOs omit per-position arrays to keep responses compact; the ending snapshot contains position detail. No cache/precomputed mutable snapshot is needed at this scale, so new trades cannot leave cached financial results stale.
+
+The engine never consults current mutable lot balances for past values. FIFO allocations already encode which purchase costs were consumed. End-of-day sums are independent of ordering among same-date records, including tied recording timestamps. It verifies nonnegative reconstructed resources and `realized + unrealized = equity − initial capital` rather than returning plausible but inconsistent totals.
+
+The persisted simulation start is 2022-01-03. Opening funding belongs to this synthetic clock; actual creation and ledger timestamps are not rewritten. V2 is additive, and a V1-to-V2 PostgreSQL test preserves existing orders/funding/cash/cost. A local pre-upgrade backup was also restored separately and every original row hash compared, excluding only the newly added baseline column. Database backups remain outside Git and are not a replacement for production backup/recovery operations.
+
+The UI fetches the combined endpoint with cancellation guards so late responses cannot overwrite a different selected range/portfolio. Monetary values remain server decimal strings; chart coordinate/formatting conversion uses Number only for presentation. Recharts is lazy-loaded separately (not on the login path). The equity line preserves null gaps; a distinct dashed line shows the initial capital. Keyboard interaction, explicit tooltips and a paginated dated-data table provide alternatives to reading SVG alone. Allocation includes cash and has a visible value/weight list. The lower Phase 1 execution desk is labeled as the latest executed state, distinct from historical analytics above it.
+
+This is a simple one-deposit wealth-return model, not TWR/MWR or a bitemporal audit-reporting system. Missing closes make affected totals unknown; a cash-only day is valid without prices. Longer-series downsampling, incremental materialization, multi-flow returns and risk analysis are intentionally deferred. See FINANCIAL_ASSUMPTIONS.md for the complete policies.

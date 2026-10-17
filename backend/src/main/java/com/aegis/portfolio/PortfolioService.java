@@ -25,7 +25,8 @@ public class PortfolioService {
       String currency,
       BigDecimal cash,
       java.time.LocalDate lastTradeDate,
-      Instant createdAt) {
+      Instant createdAt,
+      java.time.LocalDate simulationStartDate) {
     public static View of(Portfolio p) {
       return new View(
           p.getId(),
@@ -33,7 +34,8 @@ public class PortfolioService {
           p.getCurrency(),
           p.getCash(),
           p.getLastTradeDate(),
-          p.getCreatedAt());
+          p.getCreatedAt(),
+          p.getSimulationStartDate());
     }
   }
 

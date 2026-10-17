@@ -5,6 +5,7 @@ import { Brand, Notice, Disclaimer, Pagination } from "./ui";
 import { usd, qty, message } from "./format";
 import { TradeTicket } from "./TradeTicket";
 import { History } from "./History";
+import { AnalyticsPanel } from "./AnalyticsPanel";
 
 export function Dashboard({
   user,
@@ -105,7 +106,10 @@ export function Dashboard({
         <div className="roadmap-note">
           <span className="eyebrow">BUILT ON TRANSPARENCY</span>
           <p>Every decision has a record.</p>
-          <small>Risk and performance analytics arrive in later phases.</small>
+          <small>
+            Valuation and performance, grounded in the record. Risk analysis is
+            reserved for Phase 3.
+          </small>
         </div>
         <div className="sidebar-bottom">
           <span className="status-dot" /> Synthetic dataset v1
@@ -258,7 +262,7 @@ export function Dashboard({
             <span>
               Educational investment simulation · No brokerage connectivity
             </span>
-            <span>PHASE 01</span>
+            <span>PHASE 02</span>
           </footer>
         </main>
       </div>
@@ -278,7 +282,18 @@ function PortfolioDesk({
   const { portfolio, holdings } = detail;
   return (
     <>
-      <section className="summary-grid" aria-label="Portfolio summary">
+      <AnalyticsPanel portfolio={portfolio} revision={revision} />
+      <div className="execution-heading">
+        <h2>Simulated execution desk</h2>
+        <p>
+          Latest executed cash and holdings below. Historical valuations above
+          use the selected end date.
+        </p>
+      </div>
+      <section
+        className="summary-grid book-summary"
+        aria-label="Latest execution balances"
+      >
         <div className="metric panel">
           <span>Available simulated cash</span>
           <strong>{usd(portfolio.cash)}</strong>
@@ -320,7 +335,8 @@ function PortfolioDesk({
           )}
           <p className="help section-foot">
             Cost basis is the remaining settled purchase cost, not current
-            market value. Valuation and unrealized P/L are planned for Phase 2.
+            market value. The dated market values and P/L appear in the
+            valuation section above.
           </p>
         </section>
         <TradeTicket portfolio={portfolio} changed={changed} />

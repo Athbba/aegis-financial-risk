@@ -1,6 +1,6 @@
 # Rebuilding the Codex cloud workspace
 
-These instructions preserve the environment draft's installation and startup contents alongside Phase 1 source. They contain no credential values. The draft was saved during onboarding; saving a draft does not publish a filesystem snapshot or prove restoration in a new task. Review/save the configuration in environment settings, then publish to retain the prepared environment.
+These instructions preserve the environment draft's installation and startup contents alongside Phase 2 source. They contain no credential values. The draft was saved during onboarding; saving a draft does not publish a filesystem snapshot or prove restoration in a new task. Review/save the configuration in environment settings, then publish to retain the prepared environment.
 
 The cloud checkout path is `/workspace/aegis-financial-risk`. For normal developer machines, follow the portable local commands in [README.md](../README.md). No Git worktree is needed; each Codex cloud task is already isolated.
 
@@ -33,9 +33,9 @@ From /workspace/aegis-financial-risk:
 2. After source/dependency changes, rebuild with ./scripts/cloud-maven.sh -B -ntp verify, npm --prefix frontend ci --cache /workspace/.cache/npm, and npm --prefix frontend run build.
 3. Start/package the current artifacts with BUILDX_CONFIG=/workspace/.cache/buildx docker compose -f compose.yml -f compose.prebuilt.yml up --build -d. This path uses locally verified artifacts because Maven DNS resolution in source-build containers failed in this cloud environment. Stop only conflicting Java/Vite services started for this repository when necessary.
 4. Run ./scripts/wait-ready.sh. It requires backend/database health UP and the expected frontend HTML. Inspect docker compose ps -a and docker compose logs --tail=100 on failure.
-5. For changes affecting the user journey, run PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm --prefix frontend run test:e2e. Four desktop/mobile checks passed with installed system Chromium; managed browser downloads were denied. The journey exercises registration, funding, buy/sell, rejection, holdings and history against the real stack. Health alone does not establish financial correctness.
+5. For changes affecting the user journey, run PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm --prefix frontend run test:e2e. Six desktop/mobile checks passed with installed system Chromium; managed browser downloads were denied. The journeys exercise registration, funding, buy/sell, rejection, history, dated valuation, missing prices, returns, chart interaction and retry against the real stack. Health alone does not establish financial correctness.
 
-The local UI listens on 5173, backend on 8080, PostgreSQL on 5432, all bound to loopback. Do not produce localhost preview links in onboarding. Register an account through the UI; no shared login exists. This is educational simulated investing only: all ALTA/BRIM/COVE prices are fixed-seed synthetic USD data. No real trades, brokerage connections or paid credentials are needed. Phase 1 is complete; do not begin performance/risk analytics (Phase 2+) without the user's request. See README.md, TESTING.md, FINANCIAL_ASSUMPTIONS.md, PROGRESS.md and docs/MENTORING.md. Public deployment, remote CI execution and fresh-task restoration have not been verified.
+The local UI listens on 5173, backend on 8080, PostgreSQL on 5432, all bound to loopback. Do not produce localhost preview links in onboarding. Register an account through the UI; no shared login exists. This is educational simulated investing only: all ALTA/BRIM/COVE prices are fixed-seed synthetic USD data. No real trades, brokerage connections or paid credentials are needed. Phase 2 is complete; do not begin the Phase 3 risk engine without the user's request. See README.md, TESTING.md, FINANCIAL_ASSUMPTIONS.md, PROGRESS.md and docs/MENTORING.md. Public deployment, remote CI execution and fresh-task restoration have not been verified.
 
 ## GitHub access
 
@@ -48,4 +48,4 @@ Native Git uses the platform's existing HTTPS authentication/proxy. Git read/pus
 - Local credentials: `.env` is intentionally ignored by Git. Generate a new local configuration on a fresh database; preserve matching credentials for existing database volumes. Never commit or paste secret values.
 - Database: the Compose named volume is local state, not part of the Git repository. GitHub source preservation is not a backup of local users or simulated transactions. Use PostgreSQL backups separately if retaining that local data is required.
 
-Phase 1 uses only deterministic fictional asset prices and simulated investing. Do not begin Phase 2 without the user's request.
+AEGIS uses only deterministic fictional asset prices and simulated investing. Phase 2 uses a persisted 2022-01-03 funding baseline and end-of-day immutable reconstruction; V2 upgrades existing portfolios without rewriting their history. Do not begin Phase 3 without the user's request.

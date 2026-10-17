@@ -6,6 +6,7 @@ export type Portfolio = {
   cash: string;
   lastTradeDate: string | null;
   createdAt: string;
+  simulationStartDate: string;
 };
 export type Holding = { symbol: string; quantity: string; costBasis: string };
 export type Detail = { portfolio: Portfolio; holdings: Holding[] };
