@@ -55,3 +55,6 @@ postgres-data/
 .vscode/
 *.swp
 .DS_Store
+
+# Public certificate serial scratch is generated only in private rehearsal directories.
+*.srl

@@ -18,7 +18,7 @@ for name in ['owner-password','runtime-password']:
 run('openssl','req','-x509','-newkey','rsa:3072','-nodes','-keyout',str(root/'ca-key'),'-out',str(root/'ca-cert'),'-days','3','-subj','/CN=AEGIS disposable rehearsal CA')
 run('openssl','req','-newkey','rsa:3072','-nodes','-keyout',str(root/'tls-key'),'-out',str(root/'request.csr'),'-subj','/CN=localhost')
 (root/'extensions').write_text('subjectAltName=DNS:localhost,DNS:frontend,IP:127.0.0.1\nextendedKeyUsage=serverAuth\nbasicConstraints=CA:FALSE\n')
-run('openssl','x509','-req','-in',str(root/'request.csr'),'-CA',str(root/'ca-cert'),'-CAkey',str(root/'ca-key'),'-CAcreateserial','-out',str(root/'tls-cert'),'-days','2','-extfile',str(root/'extensions'))
+run('openssl','x509','-req','-in',str(root/'request.csr'),'-CA',str(root/'ca-cert'),'-CAkey',str(root/'ca-key'),'-CAcreateserial','-CAserial',str(root/'ca-serial'),'-out',str(root/'tls-cert'),'-days','2','-extfile',str(root/'extensions'))
 for p in root.iterdir():p.chmod(0o600)
 # Compose file secrets are bind mounts: non-root uid needs read permission. The parent stays 0700.
 for name in ['runtime-password','operations-hash','tls-key','tls-cert','owner-password','ca-cert']:(root/name).chmod(0o444)
