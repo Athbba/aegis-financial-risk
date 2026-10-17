@@ -15,10 +15,10 @@ Accepted when module boundaries, schema/invariants, financial assumptions, API c
 - Containerized local startup, CI, OpenAPI and truthful project/mentoring documentation.
 
 ## Phase 2 — valuation and performance
-Detailed acceptance criteria and the convention chosen before implementation are in [PHASE2_PLAN.md](PHASE2_PLAN.md). Delivery covers immutable historical reconstruction, simple one-deposit returns, honest gaps, marked holdings/allocation, interactive charts, migration preservation and numerical/PostgreSQL/browser validation. Phase 3 remains unstarted.
+Detailed acceptance criteria and the convention chosen before implementation are in [PHASE2_PLAN.md](PHASE2_PLAN.md). Delivery covers immutable historical reconstruction, simple one-deposit returns, honest gaps, marked holdings/allocation, interactive charts, migration preservation and numerical/PostgreSQL/browser validation. Phase 3 builds on these interfaces.
 
-## Phase 3 — risk (not started)
-Accept only with documented sample requirements/formulas, deterministic tests for risk attribution, historical volatility, drawdown, 95/99% historical VaR, stress comparisons, explicit uncertainty and missing-data states.
+## Phase 3 — risk (implemented; delivery evidence in TESTING.md)
+Delivered historical volatility, drawdown, 95/99% nearest-rank historical VaR, exposure concentration (not variance attribution), stress comparisons and explicit uncertainty/missing-data states. Pre-code methodology and deterministic fixtures: [PHASE3_RISK_SPEC.md](PHASE3_RISK_SPEC.md). Phase 4 is not started.
 
 ## Phase 4 — reliability/security expansion (not started)
 Accept with threat-model review, authentication abuse controls, expanded failure/concurrency tests, audit retention policy, operational metrics and documented recovery/backup drills.

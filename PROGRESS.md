@@ -1,8 +1,8 @@
 # Progress
 
-Status: **Phases 0, 1 and 2 implemented and locally verified. Stop before Phase 3.**
+Status: **Phases 0–3 implemented and locally verified. Stop before Phase 4.**
 
-Phase 1 was merged into main by PR #1 (merge ce45a8e2d3e605b4f48f063deb4e9115fc160085). Phase 2 starts from that verified merge on feature/aegis-phase-2; it does not overwrite the Phase 1 feature branch or automatically merge.
+Phase 1 was merged by PR #1; Phase 2 was merged by PR #2 (`37dda5c`). Phase 3 starts from updated main on `feature/aegis-phase-3`. Its methodology was committed before code (`6f02681`). No automatic merge or Phase 4 work is authorized.
 
 ## Phase 1 foundation retained
 
@@ -19,7 +19,7 @@ Registration/login/logout, BCrypt, HttpOnly/SameSite sessions, CSRF and owner-sc
 - Phase 1 execution desk remains available and clearly labeled as the latest executed state, separate from historical analytics. Explicit loading/empty/insufficient/error/retry states; desktop/mobile layouts.
 - Updated architecture/API/data/financial/testing documentation, acceptance criteria, observed synthetic demo journey, screenshots and five Phase 2 interview questions with correct sample answers.
 
-## Actual local verification
+## Phase 2 verification (retained historical evidence)
 
 | Check | Outcome |
 | --- | --- |
@@ -47,8 +47,21 @@ Local-development security limits remain: one-JVM sessions, no account abuse/rec
 
 ## Not started
 
-- **Phase 3:** volatility, drawdown, historical VaR, correlation, risk attribution and stress/scenario simulations.
 - **Phase 4:** expanded security, observability, audit operations and reliability.
 - **Phase 5:** final visual/accessibility refinement, optional light theme, deployment and presentation.
 
-No benchmarks, annualization, TWR/MWR, external market prices, additional cash flows or real trading were added. Phase 3 requires a separate request.
+No benchmarks, investment-return annualization, TWR/MWR, external market prices, additional cash flows or real trading were added. Phase 3 annualizes volatility only. Correlation matrices and variance attribution remain absent; exposure concentration is implemented.
+
+
+## Phase 3 delivered
+
+- Pre-code risk methodology with explicit decimal/float precision, nearest-rank percentile selection, sample thresholds, strict gaps and hand-verifiable fixtures.
+- Pure Java engine for aligned consecutive-weekday asset/portfolio returns at fixed selected exposures; sample daily/annualized volatility and per-asset volatility; exposure weights/concentration including cash in equity.
+- One-day historical VaR95/VaR99 in USD/equity percent, with 100/500 minimum observations, tail limitations and explicit cash-only/zero/missing states.
+- Actual historical equity drawdown with peak/trough dates; missing weekdays invalidate the whole selected window. Future trades and prices are excluded throughout.
+- Non-mutating stress simulations, three explicitly illustrative presets, common/per-asset sliders, saved custom comparisons and explained asset contributions. Decimal repricing preserves cash and zero-shock identity.
+- Owner-scoped summary/returns/drawdown/stress endpoints; existing authentication, CSRF, transactions and limits reused. No schema changes or new services/dependencies.
+- Cohesive Risk Lab tab, responsive real-data charts and tables, tooltips, keyboard controls, loading/unavailable/error/retry states. Original valuation/trading interfaces retained.
+- Updated README/API/architecture/assumptions/teaching docs and five Phase 3 interview questions; reproducible running-app journey.
+
+Phase 3 verification: **72 backend tests** (31 pure numerical + 41 PostgreSQL integration) passed with no failures/errors/skips; strict TypeScript/production build and formatting passed; **8 desktop/mobile Playwright cases** passed against packaged Spring Boot, PostgreSQL and production React/Nginx. All original 55 backend and six browser tests are included. Dependency scan fixes compatible inherited libraries; final Java scan retains two Spring MVC advisories on one package, explicitly reviewed/documented in [PHASE3_SECURITY.md](docs/PHASE3_SECURITY.md). npm audit and Gitleaks report no findings within their documented scope. See TESTING.md for actual commands and limits. No production-readiness claim; Phase 4 remains unstarted.

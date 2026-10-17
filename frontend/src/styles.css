@@ -1662,3 +1662,431 @@ footer span:last-child {
     font-size: 17px;
   }
 }
+
+/* Phase 3: historical risk and non-mutating scenario laboratory. */
+.analytics-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 26px;
+}
+.analytics-tabs button {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.analytics-tabs button[aria-pressed="true"] {
+  color: var(--accent);
+  background: #d7b88012;
+  border-color: #d7b88066;
+}
+.risk-lab {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  scroll-margin-top: 20px;
+}
+.risk-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.risk-heading h2 {
+  font-size: 29px;
+  margin-top: 8px;
+}
+.risk-controls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  padding: 20px;
+  gap: 16px;
+}
+.risk-controls label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 190px;
+}
+.risk-controls .help {
+  flex-basis: 100%;
+}
+.risk-context {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 12px;
+}
+.risk-context strong {
+  color: var(--accent);
+  margin-left: auto;
+  font-weight: 500;
+}
+.risk-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.risk-metrics .metric {
+  min-width: 0;
+}
+.risk-metrics .metric strong {
+  font-size: 27px;
+}
+.risk-metrics .metric small {
+  display: block;
+  min-height: 40px;
+  line-height: 1.65;
+}
+.risk-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 20px;
+}
+.risk-panel {
+  padding: 24px;
+  min-width: 0;
+}
+.risk-panel .help {
+  line-height: 1.8;
+}
+.risk-panel summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--accent);
+  padding: 3px 0;
+}
+.risk-panel summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+}
+.risk-panel[open] summary {
+  margin-bottom: 18px;
+}
+.risk-term {
+  position: relative;
+  display: inline-flex;
+  margin-left: 8px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.risk-term button {
+  display: inline-grid;
+  place-content: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  padding: 0;
+  border: 1px solid #65748b;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+}
+.risk-term [role="tooltip"] {
+  display: none;
+  position: absolute;
+  z-index: 10;
+  right: -10px;
+  top: 28px;
+  width: min(270px, 70vw);
+  padding: 14px;
+  font-size: 12px;
+  line-height: 1.7;
+  font-weight: 400;
+  background: #1e2a3c;
+  color: #eef1f6;
+  border: 1px solid #65748b;
+  border-radius: 6px;
+  box-shadow: 0 8px 30px #0008;
+}
+.risk-term:focus-within [role="tooltip"],
+.risk-term:hover [role="tooltip"] {
+  display: block;
+}
+.risk-caveat {
+  padding: 14px 16px;
+  border-left: 2px solid var(--accent);
+  background: #d7b88008;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin-top: 15px;
+}
+.drawdown-panel {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  padding: 24px;
+}
+.drawdown-panel h3 {
+  margin: 8px 0;
+}
+.drawdown-panel strong {
+  font-size: 32px;
+  color: var(--accent);
+  font-weight: 500;
+}
+.drawdown-panel > .help {
+  grid-column: 1 / -1;
+}
+.stress-lab {
+  padding: 26px;
+  min-width: 0;
+}
+.stress-lab h3 {
+  margin-top: 6px;
+}
+.stress-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 30px;
+  margin: 26px 0;
+}
+.stress-controls {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+}
+.stress-controls > label {
+  display: grid;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.stress-controls output {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.stress-controls > label output {
+  float: right;
+  font-size: 26px;
+}
+.stress-controls input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  height: 24px;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+}
+.stress-scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: -13px;
+}
+.scenario-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.scenario-buttons button {
+  font-size: 11px;
+  padding: 8px;
+}
+.stress-controls fieldset {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 15px;
+  min-width: 0;
+}
+.stress-controls legend {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 0 7px;
+}
+.asset-shock {
+  display: grid;
+  grid-template-columns: 120px 1fr 45px;
+  align-items: center;
+  gap: 12px;
+  margin: 9px 0;
+  font-size: 12px;
+}
+.asset-shock label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.asset-shock input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+}
+.asset-shock input:disabled {
+  opacity: 0.35;
+}
+.save-scenario {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+}
+.save-scenario label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  flex: 1;
+  min-width: 0;
+}
+.save-scenario input {
+  width: 100%;
+}
+.stress-results {
+  min-width: 0;
+  background: #0b101950;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 20px;
+}
+.stress-value {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+  color: var(--muted);
+  margin-top: 20px;
+  font-size: 12px;
+}
+.stress-value b {
+  display: block;
+  margin-top: 8px;
+  font-weight: 500;
+  font-size: 22px;
+  color: #e4e8ef;
+}
+.stress-change {
+  font-size: 24px;
+  margin: 20px 0 8px;
+  font-variant-numeric: tabular-nums;
+}
+.stress-change small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.selected-scenario {
+  background: #d7b8800c;
+}
+.stress-breakdown {
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+  margin-top: 22px;
+}
+.stress-breakdown > .help {
+  margin: 12px 0;
+}
+.stress-breakdown figure {
+  max-width: 700px;
+}
+.risk-method {
+  display: grid;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.9;
+}
+.risk-loading {
+  padding: 40px;
+  color: var(--muted);
+}
+.risk-lab figure {
+  margin: 0;
+  min-width: 0;
+}
+.risk-lab .table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.risk-lab table {
+  width: 100%;
+}
+.risk-lab td,
+.risk-lab th {
+  white-space: nowrap;
+  font-size: 12px;
+}
+@media (max-width: 1200px) {
+  .risk-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stress-layout {
+    gap: 18px;
+  }
+  .asset-shock {
+    grid-template-columns: 105px 1fr 40px;
+    gap: 8px;
+  }
+}
+@media (max-width: 800px) {
+  .risk-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .risk-grid,
+  .stress-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .drawdown-panel {
+    grid-template-columns: 1fr;
+  }
+  .risk-context strong {
+    margin-left: 0;
+  }
+  .risk-panel,
+  .stress-lab {
+    padding: 18px;
+  }
+}
+@media (max-width: 480px) {
+  .risk-metrics {
+    gap: 10px;
+  }
+  .risk-metrics .metric {
+    padding: 16px 12px;
+  }
+  .risk-metrics .metric strong {
+    font-size: 22px;
+  }
+  .risk-controls label {
+    min-width: 0;
+    width: 100%;
+  }
+  .risk-controls button {
+    width: 100%;
+  }
+  .risk-heading h2 {
+    font-size: 26px;
+  }
+  .save-scenario {
+    flex-wrap: wrap;
+  }
+  .asset-shock {
+    grid-template-columns: 105px 1fr 35px;
+    gap: 6px;
+  }
+  .stress-value b {
+    font-size: 19px;
+  }
+}
+.nav-item:not(.active) {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+.nav-item + .nav-item {
+  margin-top: 6px;
+}
+@media (max-width: 1024px) {
+  .nav-item + .nav-item {
+    margin-top: 0;
+  }
+}

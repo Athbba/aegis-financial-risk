@@ -1,6 +1,6 @@
 # Architecture
 
-AEGIS is an educational investment simulator, delivered as a modular Java application and a React client. Phase 1 established accounting and traceability; Phase 2 adds historical valuation and simple performance without introducing a risk engine.
+AEGIS is an educational investment simulator, delivered as a modular Java application and a React client. Phase 1 established accounting and traceability; Phase 2 adds historical valuation and simple performance; Phase 3 layers historical risk and read-only stress repricing on that foundation.
 
 ```mermaid
 flowchart LR
@@ -23,6 +23,7 @@ flowchart LR
 | `portfolio` | Ownership, funding, consistent holdings/cash snapshot, append-only ledger/audit persistence |
 | `market` | Synthetic data generation/loading, exact-date quote access, historical-price interface |
 | `analytics` | Pure historical valuation, bounded execution/price reads, owner-scoped valuation/performance APIs |
+| `risk` | Pure aligned-return/volatility/VaR/drawdown/stress engine and bounded owner-scoped read APIs |
 | `trading` | Transaction orchestration, idempotency, chronological orders, FIFO position lots; pure `FinancialMath` |
 | `shared` | Protocol-independent business failures |
 | `web` | Common errors, pagination, exact decimal JSON serialization, OpenAPI configuration |
@@ -68,4 +69,17 @@ The persisted simulation start is 2022-01-03. Opening funding belongs to this sy
 
 The UI fetches the combined endpoint with cancellation guards so late responses cannot overwrite a different selected range/portfolio. Monetary values remain server decimal strings; chart coordinate/formatting conversion uses Number only for presentation. Recharts is lazy-loaded separately (not on the login path). The equity line preserves null gaps; a distinct dashed line shows the initial capital. Keyboard interaction, explicit tooltips and a paginated dated-data table provide alternatives to reading SVG alone. Allocation includes cash and has a visible value/weight list. The lower Phase 1 execution desk is labeled as the latest executed state, distinct from historical analytics above it.
 
-This is a simple one-deposit wealth-return model, not TWR/MWR or a bitemporal audit-reporting system. Missing closes make affected totals unknown; a cash-only day is valid without prices. Longer-series downsampling, incremental materialization, multi-flow returns and risk analysis are intentionally deferred. See FINANCIAL_ASSUMPTIONS.md for the complete policies.
+This is a simple one-deposit wealth-return model, not TWR/MWR or a bitemporal audit-reporting system. Missing closes make affected totals unknown; a cash-only day is valid without prices. Longer-series downsampling, incremental materialization, multi-flow returns and correlation/variance attribution are intentionally deferred. See FINANCIAL_ASSUMPTIONS.md for the complete policies.
+
+
+## Phase 3 risk read model
+
+`RiskController` reuses session authentication, `CurrentUser`, CSRF and existing domain error conventions. `RiskService` verifies ownership before date/window/scenario domain handling, then uses a read-only REPEATABLE READ transaction with 15s timeout. The summary loads bounded immutable executions, funding and one bulk price set through the requested date. It calls the unchanged `ValuationEngine` once for the selected window and passes its ending snapshot to the separate pure `RiskEngine`. No current mutable lots enter historical calculations, and no schema migration is necessary.
+
+The summary combines exposures, historical shock observations, volatility, VaR and actual equity drawdown in one snapshot. Dedicated returns/drawdown endpoints expose the same results. Stress loads one selected-date valuation and calculates at most eight scenarios over those quantities. POST computation remains CSRF protected; there are no persistence writes or audit events. PostgreSQL tests compare full financial-row JSON before/after successful and rejected stress requests.
+
+For T executions, D calendar days, A symbols and N aligned shocks, time is O(T log T + D×A + N log N), memory O(T + D×A + N). Actual queries: owner lookup, bounded executions (≤10001 rows to detect the 10000 cap), funding and one bulk price query; no query per day, asset or scenario. At most 100 symbols × 1461 days bounds prices to 146100 rows; actual synthetic history has 1043 closes per asset / 1042 full-window return pairs. A summary response contains at most 1043 shock records under the conservative weekday bound, with up to 100 returns per record. Missing symbol/date diagnostics are also bounded by the price rectangle. Dedicated endpoints intentionally reuse the same bounded calculation; there is no mutable cache or separate infrastructure.
+
+The React Risk Lab preserves the original dark palette, keeps performance/trading accessible, and renders only real API values. Chart numbers/bin counts are presentation transforms of backend observations. Financial sums/percentages come from Java decimal calculations. Requests use cancellation guards; changing analysis removes prior output while loading, and stress sliders debounce 250ms with stale-response protection. Charts include keyboard layers and exact data tables; controls, focus tooltips, responsive grids and scrollable tables support desktop/mobile journeys. Saved custom comparisons are session component state, reset when analysis/portfolio changes; no scenario persistence is claimed.
+
+See [risk specification](docs/PHASE3_RISK_SPEC.md) for the strict missing-weekday and sample policies. See [security scan evidence](docs/PHASE3_SECURITY.md) for compatible dependency fixes and remaining Spring MVC advisory limitations; the Phase 4 security/operations expansion is not started.

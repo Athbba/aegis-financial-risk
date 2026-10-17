@@ -102,3 +102,37 @@ A period with a missing endpoint has `status: MISSING_ENDPOINT_PRICE` and null c
 Malformed/missing dates: 400 INVALID_INPUT. Reversed ranges, dates after 2025-12-31, or ranges over 1,461 inclusive calendar days: 422 INVALID_DATE_RANGE. A start before portfolio simulation start: 422 BEFORE_SIMULATION_START. More than 10,000 executions through the end date or 100 distinct traded assets: 422 ANALYTICS_LIMIT. No silent truncation/sampling. Missing funding: FUNDING_UNAVAILABLE; inconsistent execution/allocation/accounting records: ACCOUNTING_DATA_INCONSISTENT (422). Those integrity failures are explicit, not replaced with estimated values.
 
 Historical quantities, cost and cash are reconstructed from immutable executions/funding/allocations, never current mutable lot remainders. Details/formulas and the manually verifiable 3.20% fixture are in FINANCIAL_ASSUMPTIONS.md. OpenAPI JSON includes the new DTOs and exact-decimal string schema.
+
+
+## Phase 3 — financial risk (owner scoped)
+
+All routes start at `/api/portfolios/{id}/risk`, require the existing authenticated session, and return 404 for another user's portfolio. Decimal fields are JSON strings. Read requests are transactionally consistent within each response; separate responses may see later committed trades. Existing trading and valuation endpoints are unchanged.
+
+| Method / suffix | Input | Result |
+| --- | --- | --- |
+| GET `/summary` | `date=2025-12-31&lookbackDays=730` (defaults shown) | Actual clipped `from`, selected `date`, requested calendar window, USD valuation, `analysis` and actual-equity `drawdown` |
+| GET `/returns` | Same date/window | Status, candidate/missing pair counts, missing symbol/date prices, valid shock points with decimal returnPercent, signed lossUsd and fractional assetReturns |
+| GET `/drawdown` | Same date/window | Status, percent decline, peakDate, troughDate, complete weekday observation count, missingDates |
+| POST `/stress` | JSON date and 1–8 scenarios; CSRF header required | Scenario array with unchanged cash, current/stressed equity, signed gainLoss/percent and effective per-asset shocks/prices/values/contributions |
+
+`analysis` includes `dailyVolatility`, `annualVolatility`, `var95`, `var99`, `assets` (including CASH, equity weights and daily per-asset volatility), `concentration` (Σ risky equity weights²) and `returns`. Volatility metrics carry `status`, `value` (percentage points), `observations`, `minimum`; VaR carries `status`, `usd`, `percent`, `observations`, `minimum`. Missing/insufficient metrics have null values. Named states: COMPLETE, CASH_ONLY (analytic zero), ZERO_EQUITY, MISSING_PRICES, MISSING_HISTORY, INSUFFICIENT_OBSERVATIONS; drawdown additionally uses MISSING_VALUATIONS. Return status COMPLETE describes data alignment, while each metric independently enforces its minimum.
+
+Lookback is 2–1461 inclusive **calendar** days, clipped at the portfolio simulation start, not an observation count. Dates must be in 2022-01-03–2025-12-31. Current unpriced holdings remain explicitly unavailable; missing historical weekdays invalidate estimates without discarding the diagnostics. Limits retain 100 traded symbols/10000 executions; violations return 422 with existing problem-detail conventions. A foreign owner is checked before domain validation. Malformed date/JSON formats return 400; invalid business ranges/scenarios return 422. CSRF failures return 403, unauthenticated requests 401.
+
+Example request after obtaining the session and `X-XSRF-TOKEN` as above:
+
+```http
+POST /api/portfolios/{id}/risk/stress
+Content-Type: application/json
+X-XSRF-TOKEN: <session-csrf-token>
+
+{
+  "date": "2025-12-31",
+  "scenarios": [
+    {"name": "Broad selloff", "commonShockPercent": "-10", "overrides": {}},
+    {"name": "Mixed", "commonShockPercent": "-10", "overrides": {"BRIM": "20"}}
+  ]
+}
+```
+
+Scenario names are 1–60 characters; shocks −100…+100 percentage points with ≤4 decimals; ≤100 overrides, each naming a held asset. Overrides replace the common shock, not add to it. Missing/null scenarios and inputs are rejected. Cash is never shocked. Result values reconcile at the aggregate-position cent rounding convention. A stress request never creates an order or financial/audit record. No idempotency key is needed for this read-only computation. See [the complete formulas](docs/PHASE3_RISK_SPEC.md).
