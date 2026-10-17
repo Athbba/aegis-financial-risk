@@ -1,0 +1,55 @@
+# Local environment configuration; only reviewed templates belong in source control.
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Credentials, private keys and local account configuration.
+.aws/
+.ssh/
+.secrets/
+secrets/
+credentials/
+credentials.json
+credentials.*.json
+service-account*.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+.netrc
+.npmrc
+
+# Build outputs, dependencies, caches and browser-test artifacts.
+backend/target/
+frontend/node_modules/
+frontend/dist/
+frontend/playwright-report/
+frontend/test-results/
+frontend/*.tsbuildinfo
+node_modules/
+.cache/
+.tools/
+coverage/
+*.log
+
+# Local database files, backups and scratch data. Flyway SQL remains tracked.
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
+*.dump
+*.backup
+pgdata/
+postgres-data/
+.local/
+
+# Editor and operating-system metadata.
+.idea/
+.vscode/
+*.swp
+.DS_Store
