@@ -19,6 +19,9 @@ public class AuthService {
   private final AuthenticationManager authentication;
   private final AttemptLimiter attempts;
 
+  @org.springframework.beans.factory.annotation.Value("${aegis.enrollment:open}")
+  private String enrollment;
+
   public AuthService(
       UserRepository users,
       PasswordEncoder passwords,
@@ -32,6 +35,9 @@ public class AuthService {
 
   @Transactional
   public Identity register(String email, String password) {
+    if (!enrollment.equals("open"))
+      throw new org.springframework.web.server.ResponseStatusException(
+          org.springframework.http.HttpStatus.FORBIDDEN, "Demo enrollment is closed.");
     String normalized = normalize(email);
     checkPasswordLength(password);
     if (users.findByEmail(normalized).isPresent())

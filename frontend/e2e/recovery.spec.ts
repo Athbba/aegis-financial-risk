@@ -85,10 +85,35 @@ test("pending order survives absent confirmation, refresh and a server restart w
     let ready = false;
     for (let i = 0; i < 60; i++) {
       try {
-        const res = await page.request.get(
-          "http://localhost:8080/actuator/health/readiness",
-        );
-        if (res.ok()) {
+        const healthy =
+          process.env.AEGIS_E2E_PRIVATE_HEALTH === "true"
+            ? execFileSync(
+                "docker",
+                [
+                  "compose",
+                  "exec",
+                  "-T",
+                  "backend",
+                  "wget",
+                  "-Y",
+                  "off",
+                  "-qO-",
+                  "http://127.0.0.1:8080/actuator/health/readiness",
+                ],
+                {
+                  cwd: path.resolve(import.meta.dirname, "../.."),
+                  timeout: 5000,
+                  stdio: "pipe",
+                },
+              )
+                .toString()
+                .includes('"UP"')
+            : (
+                await page.request.get(
+                  "http://localhost:8080/actuator/health/readiness",
+                )
+              ).ok();
+        if (healthy) {
           ready = true;
           break;
         }

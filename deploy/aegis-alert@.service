@@ -1,0 +1,5 @@
+[Unit]
+Description=AEGIS operational failure requiring operator response: %i
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/logger --priority daemon.crit AEGIS operational job failed: %i; inspect journal and backup freshness

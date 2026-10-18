@@ -101,7 +101,12 @@ export function History({
             : "No records yet. Executed activity will appear here."}
         </p>
       ) : (
-        <div className="table-scroll">
+        <div
+          className="table-scroll"
+          tabIndex={0}
+          role="region"
+          aria-label="Financial history table"
+        >
           <table>
             <caption className="sr-only">
               {tab === "orders"

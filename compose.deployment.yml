@@ -1,0 +1,119 @@
+# Distinct one-instance deployment; never combine with compose.yml or its existing volume.
+name: ${DEPLOY_PROJECT:?Set an isolated deployment project}
+services:
+  db:
+    image: ${DATABASE_IMAGE:?Use a locally built immutable database tag}
+    user: postgres
+    environment:
+      POSTGRES_DB: aegis
+      POSTGRES_USER: aegis_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/owner-password
+    secrets: [owner-password]
+    volumes: ["deployment-data:/var/lib/postgresql/data"]
+    networks: [private]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    pids_limit: 256
+    mem_limit: 512m
+    cpus: 1
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis_owner -d aegis"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  migrate:
+    image: ${API_IMAGE:?Use an immutable API tag}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - 'export MIGRATION_PASSWORD="$$(cat /run/secrets/owner-password)"; exec java -jar /app/app.jar --migrate-only'
+    environment:
+      MIGRATION_DATABASE_URL: jdbc:postgresql://db:5432/aegis
+      MIGRATION_USERNAME: aegis_owner
+    secrets: [owner-password]
+    networks: [private]
+    depends_on:
+      db: {condition: service_healthy}
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
+    mem_limit: 512m
+    pids_limit: 128
+  provision:
+    image: ${DATABASE_IMAGE}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - 'export PGPASSWORD="$$(cat /run/secrets/owner-password)" AEGIS_RUNTIME_PASSWORD="$$(cat /run/secrets/runtime-password)"; exec psql -f /opt/runtime-role.sql'
+    environment:
+      PGHOST: db
+      PGUSER: aegis_owner
+      PGDATABASE: aegis
+      AEGIS_RUNTIME_USER: aegis_runtime_deploy
+    secrets: [owner-password, runtime-password]
+    volumes: ["./ops/runtime-role.sql:/opt/runtime-role.sql:ro"]
+    networks: [private]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    cap_drop: [ALL]
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 128m
+    pids_limit: 64
+  backend:
+    image: ${API_IMAGE}
+    environment:
+      SPRING_PROFILES_ACTIVE: deployment
+      SPRING_CONFIG_IMPORT: configtree:/run/secrets/
+      DATABASE_URL: jdbc:postgresql://db:5432/aegis
+      DATABASE_USERNAME: aegis_runtime_deploy
+      SPRING_FLYWAY_ENABLED: "false"
+      AEGIS_SEED_DATA: "false"
+      COOKIE_SECURE: "true"
+      SERVER_FORWARD_HEADERS_STRATEGY: none
+      AEGIS_TRUSTED_PROXY: ${DEPLOY_PROXY_IP:-172.29.51.10}
+      AEGIS_ENROLLMENT: ${DEMO_ENROLLMENT:-closed}
+    secrets:
+      - source: runtime-password
+        target: spring.datasource.password
+      - source: operations-hash
+        target: aegis.operations.password-hash
+    networks: [private]
+    depends_on:
+      provision: {condition: service_completed_successfully}
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
+    mem_limit: 768m
+    cpus: 1
+    pids_limit: 256
+    stop_grace_period: 30s
+  frontend:
+    image: ${UI_IMAGE:?Use an immutable UI tag}
+    volumes: ["./deploy/https.conf:/etc/nginx/conf.d/default.conf:ro"]
+    secrets: [tls-cert, tls-key]
+    networks:
+      private: {ipv4_address: "${DEPLOY_PROXY_IP:-172.29.51.10}"}
+      edge: {}
+    ports: ["127.0.0.1:${HTTPS_PORT:-8443}:8443", "127.0.0.1:${HTTP_PORT:-8085}:8080"]
+    depends_on: [backend]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=32m"]
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 128
+secrets:
+  owner-password: {file: "${DEPLOY_SECRETS:?Private directory}/owner-password"}
+  runtime-password: {file: "${DEPLOY_SECRETS}/runtime-password"}
+  operations-hash: {file: "${DEPLOY_SECRETS}/operations-hash"}
+  tls-cert: {file: "${DEPLOY_SECRETS}/tls-cert"}
+  tls-key: {file: "${DEPLOY_SECRETS}/tls-key"}
+networks:
+  private:
+    internal: true
+    ipam: {config: [{subnet: "${DEPLOY_SUBNET:-172.29.51.0/24}"}]}
+  edge: {}
+volumes:
+  deployment-data:

@@ -100,7 +100,8 @@ public class SecurityConfiguration {
       CookieCsrfTokenRepository csrfTokens,
       AttemptLimiter attempts,
       @Value("${aegis.auth.login-client-limit:30}") int loginLimit,
-      @Value("${aegis.auth.registration-client-limit:30}") int registrationLimit)
+      @Value("${aegis.auth.registration-client-limit:30}") int registrationLimit,
+      @Value("${aegis.trusted-proxy:}") String trustedPeer)
       throws Exception {
     http.securityContext(c -> c.securityContextRepository(contexts))
         .csrf(
@@ -108,7 +109,8 @@ public class SecurityConfiguration {
                 c.csrfTokenRepository(csrfTokens)
                     .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
         .addFilterAfter(
-            new AuthenticationAdmission(attempts, mapper, loginLimit, registrationLimit),
+            new AuthenticationAdmission(
+                attempts, mapper, loginLimit, registrationLimit, trustedPeer),
             CsrfFilter.class)
         .authorizeHttpRequests(
             a ->

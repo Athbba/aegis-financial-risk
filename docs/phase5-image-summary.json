@@ -1,0 +1,106 @@
+{
+  "sourceCommit": "3694b2ec367b3ae6b1642124a12a2510f5ab8371",
+  "scanner": "Trivy",
+  "scannerVersion": "0.76.0",
+  "database": {
+    "Version": 2,
+    "NextUpdate": "2026-10-18T18:34:28.174846475Z",
+    "UpdatedAt": "2026-10-17T18:34:28.174846796Z",
+    "DownloadedAt": "2026-10-17T21:22:43.379513151Z"
+  },
+  "javaDatabase": {
+    "Version": 1,
+    "NextUpdate": "2026-10-20T01:07:50.102177379Z",
+    "UpdatedAt": "2026-10-17T01:07:50.102177499Z",
+    "DownloadedAt": "2026-10-17T10:43:42.656237757Z"
+  },
+  "gate": {
+    "status": "PASS",
+    "counts": {
+      "api": {
+        "MEDIUM": 1
+      },
+      "ui": {
+        "MEDIUM": 1
+      },
+      "database": {
+        "MEDIUM": 1
+      }
+    }
+  },
+  "scope": "Final locally built images; no registry publication",
+  "images": {
+    "api": {
+      "imageId": "sha256:9c6b6de54294c2d88756c557744cc044486de6e4d2bac0d2798553dfa54f9781",
+      "platform": "linux/amd64",
+      "publisherDigests": [],
+      "sourceCommit": "3694b2ec367b3ae6b1642124a12a2510f5ab8371",
+      "sha256": {
+        "scan.json": "03f0d2ca178896fea897e9bfbd00595bac444c96fda3c0b125ab4dc5ced773e2",
+        "sbom.json": "a04ddde392a97f3415a1f43f19a852541a1951b527f4b2992b3d24ec0f55d0ed",
+        "oci.tar": "91bc1375f616c84ffa9d05b3807d2c3a1824b9527c9e8cc4a8b45a594c7314ce"
+      },
+      "counts": {
+        "MEDIUM": 1
+      },
+      "findings": [
+        {
+          "id": "CVE-2026-85091",
+          "severity": "MEDIUM",
+          "package": "zlib",
+          "installed": "1.3.2-r0",
+          "fixed": "1.3.2-r1",
+          "target": "aegis-p5-api:rehearsal (alpine 3.24.2)"
+        }
+      ]
+    },
+    "ui": {
+      "imageId": "sha256:8b89ac356131e4ea371960cf88e79e1dae25e0a89def9b01ffb2726dae7cb0ba",
+      "platform": "linux/amd64",
+      "publisherDigests": [],
+      "sourceCommit": "3694b2ec367b3ae6b1642124a12a2510f5ab8371",
+      "sha256": {
+        "scan.json": "51423ed47f1942ac47593a41e6c21d615aaba08c3a22755f6094f4a6091ef18c",
+        "sbom.json": "9808d880a531ab701f7252cd2f20a68fc14562e53307319d0ef7f45fa6bf0263",
+        "oci.tar": "8bbd9b00252a7cd15fc361357abaefde8896d18ec844a49584cd45a885013266"
+      },
+      "counts": {
+        "MEDIUM": 1
+      },
+      "findings": [
+        {
+          "id": "CVE-2026-85091",
+          "severity": "MEDIUM",
+          "package": "zlib",
+          "installed": "1.3.2-r0",
+          "fixed": "1.3.2-r1",
+          "target": "aegis-p5-ui:rehearsal (alpine 3.24.2)"
+        }
+      ]
+    },
+    "database": {
+      "imageId": "sha256:45a0704eaea99b1120e0585a235f9c68dc3d3c4bb3f51fe945a4802a03ab71c2",
+      "platform": "linux/amd64",
+      "publisherDigests": [],
+      "sourceCommit": "3694b2ec367b3ae6b1642124a12a2510f5ab8371",
+      "sha256": {
+        "scan.json": "5d814579090322c06347fb419bdf7e2fe5dde81e4cda6f342abdbcb95f3c19ee",
+        "sbom.json": "ad9c6fa8d22cf53ef62c52800696f07110dcb3fc3d33e80d3eef2222f72ad2c9",
+        "oci.tar": "db3ed8ef3539a1d7662db4f07991eb0b98b1bf1b41cf47bf3d2bdd311d8e095b"
+      },
+      "counts": {
+        "MEDIUM": 1
+      },
+      "findings": [
+        {
+          "id": "CVE-2026-85091",
+          "severity": "MEDIUM",
+          "package": "zlib",
+          "installed": "1.3.2-r0",
+          "fixed": "1.3.2-r1",
+          "target": "aegis-p5-db:rehearsal (alpine 3.24.2)"
+        }
+      ]
+    }
+  }
+}

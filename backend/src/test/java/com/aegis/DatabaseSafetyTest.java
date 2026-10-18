@@ -21,7 +21,15 @@ import org.testcontainers.junit.jupiter.*;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.MountableFile;
 
-@SpringBootTest(properties = {"spring.flyway.enabled=false", "aegis.seed-data=false"})
+@SpringBootTest(
+    properties = {
+      "spring.flyway.enabled=false",
+      "aegis.seed-data=false",
+      "spring.profiles.active=deployment",
+      "server.servlet.session.cookie.secure=true",
+      "aegis.trusted-proxy=172.29.0.10",
+      "aegis.enrollment=open"
+    })
 @Testcontainers
 class DatabaseSafetyTest {
   @Container static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17-alpine");
@@ -125,6 +133,12 @@ class DatabaseSafetyTest {
     for (String sql :
         List.of(
             "delete from cash_ledger",
+            "delete from executed_order",
+            "delete from sell_allocation",
+            "delete from audit_event",
+            "update cash_ledger set amount=amount",
+            "update audit_event set event_type=event_type",
+            "delete from historical_price",
             "update executed_order set quantity=quantity",
             "update sell_allocation set cost=cost",
             "update historical_price set close_price=close_price",
@@ -197,6 +211,102 @@ class DatabaseSafetyTest {
             "/tmp/engineering.dump",
             "aegis_restore_engineering");
     assertThat(repeat.getExitCode()).isNotZero();
+  }
+
+  @Test
+  void rejectsInheritedSetRoleOwnershipAndExcessPrivileges() throws Exception {
+    admin().execute("create role aegis_runtime_bad login noinherit");
+    admin().execute("create role p5_parent createrole");
+    for (String[] scenario :
+        List.of(
+            new String[] {
+              "grant update(name) on portfolio to PUBLIC",
+              "revoke update(name) on portfolio from PUBLIC"
+            },
+            new String[] {
+              "grant p5_parent to aegis_runtime_bad with inherit true, set false",
+              "revoke p5_parent from aegis_runtime_bad"
+            },
+            new String[] {
+              "grant p5_parent to aegis_runtime_bad with inherit false, set true",
+              "revoke p5_parent from aegis_runtime_bad"
+            },
+            new String[] {
+              "create schema p5_owned authorization aegis_runtime_bad", "drop schema p5_owned"
+            },
+            new String[] {
+              "create database aegis_restore_owned owner aegis_runtime_bad",
+              "alter database aegis_restore_owned owner to " + postgres.getUsername()
+            },
+            new String[] {
+              "grant delete on cash_ledger to aegis_runtime_bad",
+              "revoke delete on cash_ledger from aegis_runtime_bad"
+            },
+            new String[] {
+              "grant update(name) on portfolio to aegis_runtime_bad",
+              "revoke update(name) on portfolio from aegis_runtime_bad"
+            },
+            new String[] {
+              "grant select on cash_ledger to aegis_runtime_bad with grant option",
+              "revoke all on cash_ledger from aegis_runtime_bad"
+            })) {
+      admin().execute(scenario[0]);
+      try {
+        var result =
+            postgres.execInContainer(
+                "env",
+                "AEGIS_RUNTIME_USER=aegis_runtime_bad",
+                "AEGIS_RUNTIME_PASSWORD=unused-test-only",
+                "psql",
+                "-U",
+                postgres.getUsername(),
+                "-d",
+                postgres.getDatabaseName(),
+                "-f",
+                "/tmp/runtime-role.sql");
+        assertThat(result.getExitCode())
+            .describedAs("Reject unsafe role: " + scenario[0])
+            .isNotZero();
+      } finally {
+        admin().execute(scenario[1]);
+      }
+    }
+  }
+
+  @Test
+  void deploymentGuardRejectsUnsafeSettingsAndEffectiveGrants() {
+    var env =
+        new org.springframework.mock.env.MockEnvironment()
+            .withProperty("spring.flyway.enabled", "false")
+            .withProperty("aegis.seed-data", "false")
+            .withProperty("server.servlet.session.cookie.secure", "true")
+            .withProperty("aegis.trusted-proxy", "172.29.0.10")
+            .withProperty("aegis.enrollment", "closed");
+    new DeploymentGuard(env, runtime).verify();
+    for (String[] setting :
+        List.of(
+            new String[] {"server.forward-headers-strategy", "framework"},
+            new String[] {"spring.flyway.enabled", "true"},
+            new String[] {"aegis.seed-data", "true"},
+            new String[] {"server.servlet.session.cookie.secure", "false"},
+            new String[] {"aegis.trusted-proxy", ""},
+            new String[] {"MIGRATION_PASSWORD", "never-serve-owner-credentials"})) {
+      String prior = env.getProperty(setting[0]);
+      env.setProperty(setting[0], setting[1]);
+      assertThatThrownBy(() -> new DeploymentGuard(env, runtime).verify())
+          .isInstanceOf(IllegalStateException.class);
+      if (prior == null) {
+        ((java.util.Map) env.getPropertySources().get("mockProperties").getSource())
+            .remove(setting[0]);
+      } else env.setProperty(setting[0], prior);
+    }
+    admin().execute("grant update on historical_price to " + RUNTIME);
+    try {
+      assertThatThrownBy(() -> new DeploymentGuard(env, runtime).verify())
+          .isInstanceOf(IllegalStateException.class);
+    } finally {
+      admin().execute("revoke update on historical_price from " + RUNTIME);
+    }
   }
 
   @Test

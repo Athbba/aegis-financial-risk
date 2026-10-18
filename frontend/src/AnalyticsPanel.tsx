@@ -335,7 +335,12 @@ function MarkedHoldings({ summary }: { summary: Valuation }) {
           </p>
         </div>
       ) : (
-        <div className="table-scroll">
+        <div
+          className="table-scroll"
+          tabIndex={0}
+          role="region"
+          aria-label="Historical positions table"
+        >
           <table>
             <caption className="sr-only">
               Marked holdings and position performance in USD
@@ -409,7 +414,12 @@ function SeriesTable({ series }: { series: ValueSeries }) {
   return (
     <details className="series-details">
       <summary>View dated values and price gaps</summary>
-      <div className="table-scroll">
+      <div
+        className="table-scroll"
+        tabIndex={0}
+        role="region"
+        aria-label="Daily equity observations table"
+      >
         <table>
           <caption className="sr-only">
             Historical portfolio values in USD

@@ -17,9 +17,15 @@ public class AuthenticationAdmission extends OncePerRequestFilter {
   private final AttemptLimiter limiter;
   private final ObjectMapper mapper;
   private final int loginLimit, registrationLimit;
+  private final String trustedPeer;
 
   public AuthenticationAdmission(
-      AttemptLimiter limiter, ObjectMapper mapper, int loginLimit, int registrationLimit) {
+      AttemptLimiter limiter,
+      ObjectMapper mapper,
+      int loginLimit,
+      int registrationLimit,
+      String trustedPeer) {
+    this.trustedPeer = trustedPeer;
     this.limiter = limiter;
     this.mapper = mapper;
     this.loginLimit = loginLimit;
@@ -35,12 +41,16 @@ public class AuthenticationAdmission extends OncePerRequestFilter {
         && (path.equals("/api/auth/login") || path.equals("/api/auth/register"))) {
       try {
         boolean login = path.endsWith("/login");
-        // Forwarded addresses are attacker-controlled unless a trusted proxy policy is installed.
+        // The isolated edge replaces this private header; all other peers use their transport
+        // address.
         limiter.acquire(
             login ? "login-client" : "register-client",
-            req.getRemoteAddr(),
+            ClientAddress.resolve(req, trustedPeer),
             login ? loginLimit : registrationLimit,
             Duration.ofSeconds(login ? 300 : 3600));
+      } catch (IllegalArgumentException e) {
+        res.sendError(400);
+        return;
       } catch (AttemptLimiter.Limited e) {
         res.setStatus(429);
         res.setHeader("Retry-After", Long.toString(e.retryAfter()));

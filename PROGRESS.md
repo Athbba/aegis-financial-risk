@@ -1,6 +1,6 @@
 # Progress
 
-Status: **Phases 0–4 implemented. Phase 4 verification and residual risks are recorded below. Stop before Phase 5.**
+Status: **Phase 5 local deployment preparation implemented; public release BLOCKED pending target host/domain/off-host storage/operator verification. No merge or launch.**
 
 Phase 1 was merged by PR #1; Phase 2 was merged by PR #2 (`37dda5c`). Phase 3 started from updated main on `feature/aegis-phase-3`. Its methodology was committed before code (`6f02681`). PR #3 was subsequently merged as `7870135`; its main CI passed before Phase 4 began. No automatic merge is authorized.
 
@@ -47,7 +47,7 @@ At the Phase 2 milestone, local-development limits included one-JVM sessions, no
 
 ## Not started
 
-- **Phase 5:** final visual/accessibility refinement, optional light theme, deployment and presentation.
+- Public target deployment, certificate operation, off-host backup verification and operator alerting remain pending explicit authorization and configuration.
 
 Before Phase 4, no benchmarks, investment-return annualization, TWR/MWR, external market prices, additional cash flows or real trading were added. Phase 3 annualizes volatility only. Correlation matrices and variance attribution remain absent; exposure concentration is implemented.
 
@@ -76,4 +76,12 @@ Phase 3 verification: **72 backend tests** (31 pure numerical + 41 PostgreSQL in
 - Digest-pinned restricted runtime containers and actual image scans; unresolved base-image findings remain (including PostgreSQL helper-library Critical/High findings). APK remediation was blocked by official repository HTTP 403. See [security review](docs/PHASE4_SECURITY_REVIEW.md), not a production-readiness claim.
 - Reproducible measured benchmark, operational/security/architecture/API documentation and five additional interview questions. No new infrastructure or financial-engine redesign.
 
-Verification: **88 backend tests** plus a separate benchmark test passed; frontend TypeScript/build/formatting and npm audit passed; Gitleaks source/history clean. All **10 desktop/mobile browser tests** passed, including real backend restart recovery. Details are recorded in TESTING.md. Phase 5 remains unstarted.
+Verification: **88 backend tests** plus a separate benchmark test passed; frontend TypeScript/build/formatting and npm audit passed; Gitleaks source/history clean. All **10 desktop/mobile browser tests** passed, including real backend restart recovery. Details are recorded in TESTING.md. Phase 5 supersedes that local delivery milestone below.
+
+## Phase 5 local deployment preparation
+
+The preimplementation plan is `083b6c0`, based on verified merged PR #4 and successful main CI. The distinct deployment keeps API/database/metrics private, enforces role/settings checks, separates migration secrets, validates a trusted HTTPS chain and canonical edge client identity, closes enrollment by default and preserves single-JVM reauthentication/order recovery. It explicitly accounts for non-root PostgreSQL initialization and writable data.
+
+Final-image release gates require immutable source/IDs/platform/OCI checksums, full sanitized JSON/SBOM evidence, vulnerability/Java DB age ≤48h and zero Critical/High. Medium findings remain visible. Local encrypted recovery, compatible immutable-artifact rollback, real client isolation, DB outage probes, bounded load, accessibility and synthetic screenshots are independently evidenced; [release table](docs/PHASE5_RELEASE.md) records final results.
+
+No host/domain or off-host backup destination/operator configuration is selected. Those target checks remain pending, not inferred from local rehearsal. The release recommendation remains **BLOCKED for public launch**. No merge, registry publication, external backup upload, paid resource, visibility change or live deployment is authorized/performed. Two initially overbroad CI artifacts containing image archives were deleted and the upload whitelist corrected; see the Phase 5 security review.
