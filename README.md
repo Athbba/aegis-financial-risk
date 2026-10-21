@@ -149,15 +149,11 @@ Health probes: `/actuator/health`, `/actuator/health/readiness`, `/actuator/heal
 
 Captured from the running application using only the fixed-seed synthetic dataset and automated browser-created simulated trades:
 
-![Phase 3 Risk Lab](docs/images/phase3-desktop.png)
-
-[Phase 3 mobile Risk Lab](docs/images/phase3-mobile.png)
+[Earlier Phase 1 screenshot](docs/images/phase1-desktop.png)
 
 ![Phase 2 portfolio valuation and performance](docs/images/phase2-desktop.png)
 
-[Phase 2 mobile screenshot](docs/images/phase2-mobile.png)
-
-[Earlier Phase 1 screenshot](docs/images/phase1-desktop.png)
+![Phase 3 Risk Lab](docs/images/phase3-desktop.png)
 
 ## Verify
 
